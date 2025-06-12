@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.env
+*.venv
+env/
+venv/
+ENV/
+.Python
+
+# FastAPI/Starlette
+instance/
+*.db
+*.sqlite3
+
+# VS Code/PyCharm
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+
+# Test and coverage
+htmlcov/
+.tox/
+.coverage
+.cache/
+.pytest_cache/
+
+# Logs
+*.log
+
+# Migrations
+migrations/
+alembic/
