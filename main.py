@@ -1,6 +1,5 @@
 from fastapi import FastAPI, Depends
 from fastapi.routing import APIRoute
-from fastapi.security import HTTPBearer
 from starlette.middleware.cors import CORSMiddleware
 
 from app.api.v1 import api_router
@@ -19,8 +18,6 @@ app = FastAPI(
     swagger_ui_oauth_scope=["persistAuthorization", True],
 )
 
-bearer_scheme = HTTPBearer()
-
 # Set all CORS enabled origins
 if settings.all_cors_origins:
     app.add_middleware(
@@ -31,4 +28,4 @@ if settings.all_cors_origins:
         allow_headers=["*"],
     )
 
-app.include_router(api_router, prefix=settings.API_V1_STR, dependencies=[Depends(bearer_scheme)])
+app.include_router(api_router, prefix=settings.API_V1_STR)

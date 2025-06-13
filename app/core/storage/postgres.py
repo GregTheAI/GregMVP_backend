@@ -1,13 +1,13 @@
 from sqlmodel import Session, create_engine, select, SQLModel
 
 from app.core.config import settings
-from app.domain.models.CreateUser import UserCreate
-from app.infrastructure.models import User
+from app.dtos.CreateUser import UserCreate
+from app.entities import User
 
 engine = create_engine(str(settings.sqlalchemy_database_uri))
 
 
-# make sure all SQLModel models are imported (app.models) before initializing DB
+# make sure all SQLModel dtos are imported (app.dtos) before initializing DB
 # otherwise, SQLModel might fail to initialize relationships properly
 # for more details: https://github.com/fastapi/full-stack-fastapi-template/issues/28
 
@@ -18,7 +18,7 @@ def init_db(session: Session) -> None:
     # the tables un-commenting the next lines
     # from sqlmodel import SQLModel
 
-    # This works because the models are already imported and registered from app.models
+    # This works because the dtos are already imported and registered from app.dtos
     SQLModel.metadata.create_all(engine)
 
     user = session.exec(
