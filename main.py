@@ -1,5 +1,8 @@
 from fastapi import FastAPI, Depends
 from fastapi.routing import APIRoute
+
+import asyncio
+
 from starlette.middleware.cors import CORSMiddleware
 
 from app.api.v1 import api_router
@@ -18,7 +21,6 @@ app = FastAPI(
     swagger_ui_oauth_scope=["persistAuthorization", True],
 )
 
-# Set all CORS enabled origins
 if settings.all_cors_origins:
     app.add_middleware(
         CORSMiddleware,
@@ -29,3 +31,13 @@ if settings.all_cors_origins:
     )
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
+
+def run_migrations():
+    """Run Alembic migrations in async context"""
+    from alembic import command
+    from alembic.config import Config
+
+    alembic_cfg = Config("alembic.ini")
+    command.upgrade(alembic_cfg, "head")
+
+run_migrations()

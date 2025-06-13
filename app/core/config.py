@@ -57,15 +57,12 @@ class Settings(BaseSettings):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def sqlalchemy_database_uri(self) -> MultiHostUrl:
-        return MultiHostUrl.build(
-            scheme="postgresql+psycopg",
-            username=self.POSTGRES_USER,
-            password=self.POSTGRES_PASSWORD,
-            host=self.POSTGRES_SERVER,
-            port=self.POSTGRES_PORT,
-            path=self.POSTGRES_DB,
+    def sqlalchemy_database_uri(self) -> str:
+        uri = (
+            f"postgresql+psycopg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
+            f"@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
         )
+        return uri
 
     SMTP_TLS: bool = True
     SMTP_SSL: bool = False

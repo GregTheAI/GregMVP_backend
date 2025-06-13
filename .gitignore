@@ -33,5 +33,4 @@ htmlcov/
 *.log
 
 # Migrations
-migrations/
 alembic/

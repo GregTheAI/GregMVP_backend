@@ -27,7 +27,7 @@ def api_created(data: T = None, message: str = "Created successfully") -> JSONRe
     )
     return JSONResponse(status_code=HTTP_201_CREATED, content=response.dict())
 
-def api_bad_request(message: str = "Bad request", errors: Optional[Dict] = None) -> JSONResponse:
+def api_bad_response(message: str = "Bad request", errors: Optional[Dict] = None) -> JSONResponse:
     response = ApiResponse(
         message=message,
         code=HTTP_400_BAD_REQUEST,

@@ -11,5 +11,5 @@ class UserCreate(UserBase):
     password: str = Field(min_length=8, max_length=40)
 
 class RegisterUserDto(BaseModel):
-    email: EmailStr = Field(max_length=255)
+    email: str = Field(max_length=255)
     password: str = Field(min_length=8, max_length=40)
