@@ -4,8 +4,10 @@ from symtable import Class
 from fastapi import HTTPException, Depends
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
-from app.dtos.user_dto import UserResponseDto
+from app.dtos.user_dto import UserResponseDto, RegisterUserDto
+from app.entities import User
 from app.repositories.user_repository import UserRepository
+from app.services.jwt_service import JwtService
 
 # from passlib.context import CryptContext
 # from datetime import datetime, timedelta
@@ -67,15 +69,9 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 #     user.hashed_password = get_password_hash(user.hashed_password)
 #     return create_user(user)
 
-
-class UserService:
+class AuthService:
     """Service for user-related operations."""
     def __init__(self, user_repo = Depends(UserRepository)):
         self.user_repo = user_repo
 
-    async def get_user_by_email(self, email: str) -> UserResponseDto | None:
-        """Create a new user in the database."""
-        user = await self.user_repo.get_user_by_email(email=email)
-        if user is None:
-            return None
-        return UserResponseDto(user)
+

@@ -2,11 +2,8 @@ from fastapi import APIRouter
 from fastapi.params import Depends
 from starlette.responses import JSONResponse
 
-from app.dtos.CreateUser import RegisterUserDto
-from app.dtos.api_response import ApiResponse
-from app.dtos.user_dto import UserResponseDto
-from app.repositories.user_repository import UserRepository
-from app.services.auth_service import UserService
+from app.dtos.user_dto import RegisterUserDto
+from app.services import AuthService, UserService
 from app.utils.helpers.api_helpers import api_ok_response, api_bad_response
 
 router = APIRouter(tags=["auth"])
@@ -15,7 +12,7 @@ router = APIRouter(tags=["auth"])
 @router.post("/user")
 async def get_user(request: RegisterUserDto, user_repo: UserService = Depends()) -> JSONResponse:
 
-    user = await user_repo.get_user_by_email(email=request.email)
+    user = await user_repo.get_user_by_email(email=str(request.email))
     if user is None:
         return api_bad_response("User not found", errors={"email": "User with this email does not exist"})
 
@@ -25,7 +22,7 @@ async def get_user(request: RegisterUserDto, user_repo: UserService = Depends())
 
 
 @router.post("/register")
-def register(request: RegisterUserDto) -> JSONResponse:
+def register(request: RegisterUserDto, user_repo: AuthService = Depends()) -> JSONResponse:
     return api_ok_response(
         data=request,
         message="User registered successfully"
