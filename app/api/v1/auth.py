@@ -4,33 +4,25 @@ from starlette.responses import JSONResponse
 
 from app.dtos.user_dto import RegisterUserDto
 from app.services import AuthService, UserService
-from app.utils.helpers.api_helpers import api_ok_response, api_bad_response
+from app.services.dependencies import get_user_service
+from app.utils.helpers.api_helpers import api_ok_response, api_bad_response, api_created_response
 
 router = APIRouter(tags=["auth"])
 
-
-@router.post("/user")
-async def get_user(request: RegisterUserDto, user_repo: UserService = Depends()) -> JSONResponse:
-
-    user = await user_repo.get_user_by_email(email=str(request.email))
-    if user is None:
-        return api_bad_response("User not found", errors={"email": "User with this email does not exist"})
-
-    return api_ok_response(
-        data=user,
-        message="User registered successfully")
-
-
 @router.post("/register")
-def register(request: RegisterUserDto, user_repo: AuthService = Depends()) -> JSONResponse:
-    return api_ok_response(
-        data=request,
-        message="User registered successfully"
-    )
+async def register(request: RegisterUserDto, user_repo: UserService = Depends(get_user_service)) -> JSONResponse:
+    create_user_response = await user_repo.create_user(request)
+    if create_user_response.isSuccess is False:
+        return api_bad_response(create_user_response.message)
+
+    return api_created_response(
+        data=create_user_response.data,
+        message=create_user_response.message)
 
 
 @router.post("/login")
-def login():
+def login(request, user_repo: UserService = Depends(get_user_service)):
+
     return {
         "access_token": "fake-token"}
 

@@ -18,7 +18,7 @@ def api_ok_response(data: T = None, message: str = "Success") -> JSONResponse:
     )
     return JSONResponse(status_code=HTTP_200_OK, content=response.dict())
 
-def api_created(data: T = None, message: str = "Created successfully") -> JSONResponse:
+def api_created_response(data: T = None, message: str = "Created successfully") -> JSONResponse:
     response = ApiResponse[T](
         message=message,
         code=HTTP_201_CREATED,
