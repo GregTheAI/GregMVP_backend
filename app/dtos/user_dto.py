@@ -18,4 +18,14 @@ class UserResponseDto:
 
 class RegisterUserDto(BaseModel):
     email: EmailStr = Field(max_length=255)
-    password: str = Field(min_length=8, max_length=40)
+    password: str | None = None
+
+class RegisterUser(RegisterUserDto):
+    provider: str = "direct"
+    profile_picture: str | None = None
+    name: str | None = None
+
+
+class UpdateUserProfile(BaseModel):
+    profile_picture: str | None = None
+    name: str | None = None

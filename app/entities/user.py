@@ -15,9 +15,12 @@ class User(AuditTrail, SQLModel, table=True):
     email: EmailStr = Field(unique=True, index=True, max_length=255)
     full_name: str | None = Field(default=None, index=True, max_length=255)
     username: str = Field(unique=True, index=True, max_length=50)
-    password: str = Field(index=True)
+    password: str | None = Field(default=None, index=True)
+    profile_picture: str | None = Field(default=None, index=True)
+    provider: str = Field(default="direct", index=True, max_length=50)
     subscription_id: uuid.UUID = Field(foreign_key="subscriptions.id")
     role_id: uuid.UUID | None = Field(foreign_key="user_roles.id")
     is_active: bool = True
     is_superuser: bool = False
+    is_email_verified: bool = False
     last_login: datetime = Field(default_factory=datetime.utcnow)

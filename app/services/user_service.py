@@ -2,7 +2,7 @@
 from fastapi import Depends
 
 from app.dtos.activity_status import ActivityStatus
-from app.dtos.user_dto import UserResponseDto, RegisterUserDto
+from app.dtos.user_dto import UserResponseDto, RegisterUserDto, RegisterUser, UpdateUserProfile
 from app.entities import User
 from app.repositories.role_repository import RoleRepository
 from app.repositories.subscription_repository import SubscriptionRepository
@@ -19,9 +19,8 @@ class UserService:
         self.subscription_repo: SubscriptionRepository = subscription_repo
         self.role_repo: RoleRepository = role_repo
 
-    async def create_user(self, user: RegisterUserDto) -> ActivityStatus:
+    async def create_user(self, user: RegisterUser) -> ActivityStatus:
         """Create a new user in the database."""
-
         try:
             email_str = str(user.email)
             existing_user = await self.user_repo.get_user_by_email(email=email_str)
@@ -44,14 +43,24 @@ class UserService:
             user_role_id = user_role.id
             # username should extract from email text before @
             username = email_str.split('@')[0]
-            hashed_password = JwtService.hash_password(user.password)
+            if user.password is not None:
+                user.password = JwtService.hash_password(user.password)
+
+            is_email_verified = False
+            if user.provider != "direct":
+                # If the user is registering through an OAuth provider, we don't need a password
+                is_email_verified = True
 
             request = User(
                 email=user.email,
-                password=hashed_password,
+                password=user.password,
                 username=username,
                 role_id=user_role_id,
-                subscription_id=free_plan_id
+                subscription_id=free_plan_id,
+                provider=user.provider,
+                profile_picture=user.profile_picture,
+                full_name=user.name,
+                is_email_verified=is_email_verified
             )
             created_user = await self.user_repo.create_user(request)
             return ActivityStatus(code=200, message="User created successfully", data=UserResponseDto.from_entity(created_user))
@@ -63,4 +72,19 @@ class UserService:
         user = await self.user_repo.get_user_by_email(email=email)
         if user is None:
             return None
-        return UserResponseDto(user)
+        return UserResponseDto.from_entity(user)
+
+    async def user_exists_by_email(self, email: str) -> bool:
+       return await self.user_repo.user_exists_by_email(email=email)
+
+    async def update_user_profile(self, email: str, user: UpdateUserProfile) -> ActivityStatus:
+        existing_user = await self.user_repo.get_user_by_email(email=email)
+        if existing_user is None:
+            return ActivityStatus(code=404, message="User not found")
+
+        existing_user.profile_picture = user.profile_picture
+        existing_user.full_name = user.name
+
+        updated_user = await self.user_repo.update_user_profile(existing_user)
+        return ActivityStatus(code=200, message="User created successfully",
+                              data=UserResponseDto.from_entity(updated_user))

@@ -40,6 +40,15 @@ class BaseRepository(Generic[T]):
         result = await self.db.execute(stmt)
         return result.scalars().first()
 
+    async def exists_by_field(self, field_name: str, value) -> bool:
+        field = getattr(self.model, field_name, None)
+        if field is None:
+            raise AttributeError(f"{self.model.__name__} has no field '{field_name}'")
+
+        stmt = select(field).where(field == value).limit(1)
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none() is not None
+
     async def create(self, entity: dict) -> T:
         db_obj = self.model(**entity)
         self.db.add(db_obj)
@@ -47,9 +56,9 @@ class BaseRepository(Generic[T]):
         await self.db.refresh(db_obj)
         return db_obj
 
-    async def update(self, db_obj: T, entity: dict) -> T:
-        for field, value in entity.items():
-            setattr(db_obj, field, value)
+    async def update(self, db_obj: T) -> T:
+        # for field, value in entity.items():
+        #     setattr(db_obj, field, value)
         self.db.add(db_obj)
         await self.db.commit()
         await self.db.refresh(db_obj)

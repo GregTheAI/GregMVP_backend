@@ -1,77 +1,76 @@
-# write service for authentication with jwt and outh2
-from symtable import Class
+from authlib.integrations.starlette_client import OAuth
+from starlette.requests import Request
+from starlette.responses import RedirectResponse
 
-from fastapi import HTTPException, Depends
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-
-from app.dtos.user_dto import UserResponseDto, RegisterUserDto
-from app.entities import User
-from app.repositories.user_repository import UserRepository
+from app.core.config import settings
+from app.dtos.activity_status import ActivityStatus
+from app.dtos.auth_dto import OauthResponseDto
+from app.dtos.user_dto import RegisterUser, UpdateUserProfile
 from app.services.jwt_service import JwtService
+from app.services.user_service import UserService
 
-# from passlib.context import CryptContext
-# from datetime import datetime, timedelta
-# from jose import JWTError, jwt
-# from app.dtos.user import User, UserInDB
-# from app.database import get_user_by_email, create_user
-# from app.config import settings
-# Define the OAuth2 scheme
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-# Password hashing context
-# pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-# def verify_password(plain_password: str, hashed_password: str) -> bool:
-#     """Verify a plain password against a hashed password."""
-#     return pwd_context.verify(plain_password, hashed_password)
-# def get_password_hash(password: str) -> str:
-#     """Hash a password using bcrypt."""
-#     # implement password hashing with bcrypt without  validatiion
-#
-#
-#     return pwd_context.hash(password)
-#
-# def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
-#     """Create a JWT access token."""
-#     to_encode = data.copy()
-#     if expires_delta:
-#         expire = datetime.utcnow() + expires_delta
-#     else:
-#         expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-#     to_encode.update({"exp": expire})
-#     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
-#     return encoded_jwt
-# def authenticate_user(email: str, password: str) -> UserInDB | None:
-#     """Authenticate a user by email and password."""
-#     user = get_user_by_email(email)
-#     if not user or not verify_password(password, user.hashed_password):
-#         return None
-#     return user
-# def get_current_user(token: str = Depends(oauth2_scheme)) -> UserInDB:
-#     """Get the current user from the JWT token."""
-#     credentials_exception = HTTPException(
-#         status_code=401,
-#         detail="Could not validate credentials",
-#         headers={"WWW-Authenticate": "Bearer"},
-#     )
-#     try:
-#         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-#         email: str = payload.get("sub")
-#         if email is None:
-#             raise credentials_exception
-#         token_data = UserInDB(email=email)
-#     except JWTError:
-#         raise credentials_exception
-#     user = get_user_by_email(token_data.email)
-#     if user is None:
-#         raise credentials_exception
-#     return user
-# def create_new_user(user: User) -> UserInDB:
-#     """Create a new user in the database."""
-#     user.hashed_password = get_password_hash(user.hashed_password)
-#     return create_user(user)
 
 class AuthService:
     """Service for user-related operations."""
-    def __init__(self, user_repo = Depends(UserRepository)):
-        self.user_repo = user_repo
 
+    def __init__(self, user_service: UserService):
+        self.user_service: UserService = user_service
+        self.oauth = OAuth(settings)
 
+        scope: str = 'openid email profile'
+
+        self.oauth.register(
+            name='google',
+            client_id=settings.GOOGLE_CLIENT_ID,
+            client_secret=settings.GOOGLE_CLIENT_SECRET,
+            server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+            client_kwargs={'scope': 'openid email profile'}
+        )
+
+        # self.oauth.register(
+        #     name='microsoft',
+        #     client_id=os.getenv("MICROSOFT_CLIENT_ID"),
+        #     client_secret=os.getenv("MICROSOFT_CLIENT_SECRET"),
+        #     server_metadata_url='https://login.microsoftonline.com/common/v2.0/.well-known/openid-configuration',
+        #     client_kwargs={'scope': 'openid email profile'}
+        # )
+
+    async def create_oauth_client(self, request: Request, provider: str) -> ActivityStatus:
+        try:
+            redirect_url = f"{settings.BACKEND_URL}api/v1/auth/callback/{provider}"
+            redirect_response = await self.oauth.create_client(provider).authorize_redirect(request,
+                                                                                            redirect_uri=redirect_url,
+                                                                                            prompt="consent")
+
+            url_response = redirect_response.headers["location"]
+            status_code = redirect_response.status_code
+            return ActivityStatus(code=status_code, message=f"Redirect to {provider} OAuth",
+                                  data=OauthResponseDto.from_entity(url_response))
+        except Exception as e:
+            return ActivityStatus(code=500, message="Failed to create OAuth client")
+
+    async def get_oauth_user(self, request: Request, provider: str):
+        redirect_url = f"{settings.FRONTEND_URL}?token="
+        try:
+            token = await self.oauth.create_client(provider).authorize_access_token(request)
+            user = token["userinfo"]
+
+            if user is None:
+                return ActivityStatus(code=401, message="Authentication failed")
+
+            user_exists = await self.user_service.user_exists_by_email(email=user.email)
+
+            if user_exists:
+                payload = UpdateUserProfile(profile_picture=user.picture,
+                                            name=user.name)
+                await self.user_service.update_user_profile(user.email, payload)
+            else:
+                payload = RegisterUser(email=user.email, provider=provider, profile_picture=user.picture,
+                                       name=user.name)
+                await self.user_service.create_user(payload)
+
+            jwt_token = JwtService.generate_token(user)
+            redirect_url = redirect_url + jwt_token
+            return RedirectResponse(redirect_url)
+        except Exception as e:
+            return RedirectResponse(redirect_url)

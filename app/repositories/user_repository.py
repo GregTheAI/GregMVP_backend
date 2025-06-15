@@ -12,5 +12,11 @@ class UserRepository(BaseRepository[User]):
     async def create_user(self, user: User) -> User:
         return await self.create(user.model_dump())
 
+    async def update_user_profile(self, user: User) -> User:
+        return await self.update(user)
+
     async def get_user_by_email(self, email: str) -> User | None:
         return await self.get_by_field("email", email)
+
+    async def user_exists_by_email(self, email: str) -> bool:
+        return await self.exists_by_field("email", email)
