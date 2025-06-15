@@ -68,6 +68,10 @@ class Settings(BaseSettings):
     POSTGRES_PASSWORD: str
     POSTGRES_DB: str
 
+    LOG_URL: str | None = None
+    LOG_SOURCE_ID: str | None = None
+    LOG_SOURCE_TOKEN: str | None = None
+
     def get(self, key: str, default=None):
         return getattr(self, key, default)
 

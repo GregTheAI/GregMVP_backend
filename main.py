@@ -7,6 +7,7 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
 from app.api.v1 import api_router
+from app.core.bootstrap import Bootstrap
 from app.core.config import settings
 
 
@@ -22,27 +23,8 @@ app = FastAPI(
     swagger_ui_oauth_scope=["persistAuthorization", True]
 )
 
-app.add_middleware(SessionMiddleware, secret_key=settings.JWT_SECRET_KEY)
+Bootstrap(app).run()
 
-if settings.all_cors_origins:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.all_cors_origins,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"]
-    )
-
-app.include_router(api_router, prefix=settings.API_V1_STR)
-
-
-def run_migrations():
-    """Run Alembic migrations in async context"""
-    from alembic import command
-    from alembic.config import Config
-
-    alembic_cfg = Config("alembic.ini")
-    command.upgrade(alembic_cfg, "head")
-
-
-run_migrations()
+# @app.on_event("startup")
+# async def on_startup():
+#     await asyncio.run(Bootstrap(app).run_database_migrations())
