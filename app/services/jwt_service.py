@@ -33,8 +33,12 @@ class JwtService:
 
     @staticmethod
     def hash_password(password: str) -> str:
-        pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+        pwd_context = JwtService.get_pwd_context()
         return pwd_context.hash(password)
+
+    @staticmethod
+    def get_pwd_context() -> CryptContext:
+        return CryptContext(schemes=["bcrypt"], deprecated="auto")
 
     @staticmethod
     def generate_token(data: dict) -> str:
@@ -42,3 +46,8 @@ class JwtService:
         expire = datetime.now(timezone.utc) + timedelta(minutes=EXPIRY_TIME)
         to_encode.update({"exp": expire})
         return JwtService.encode(to_encode)
+
+    @staticmethod
+    def verify_password(input_password, db_password) -> bool:
+        pwd_context = JwtService.get_pwd_context()
+        return pwd_context.verify(input_password, db_password)

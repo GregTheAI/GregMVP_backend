@@ -53,3 +53,12 @@ def api_server_error(message: str = "Internal server error", errors: Optional[Di
         errors=errors
     )
     return JSONResponse(status_code=HTTP_500_INTERNAL_SERVER_ERROR, content=response.dict())
+
+def api_response(code: int, message: str, data: T, errors: Optional[Dict] = None) -> JSONResponse:
+    response = ApiResponse(
+        message=message,
+        code=code,
+        data=data,
+        errors=errors
+    )
+    return JSONResponse(status_code=code, content=response.model_dump())

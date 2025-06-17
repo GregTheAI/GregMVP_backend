@@ -1,8 +1,8 @@
-
 from fastapi import Depends
 
 from app.dtos.activity_status import ActivityStatus
-from app.dtos.user_dto import UserResponseDto, RegisterUserDto, RegisterUser, UpdateUserProfile
+from app.dtos.auth_dto import TokenData, LoginResponseDto
+from app.dtos.user_dto import UserResponseDto, RegisterUser, UpdateUserProfile
 from app.entities import User
 from app.repositories.role_repository import RoleRepository
 from app.repositories.subscription_repository import SubscriptionRepository
@@ -59,11 +59,13 @@ class UserService:
                 subscription_id=free_plan_id,
                 provider=user.provider,
                 profile_picture=user.profile_picture,
-                full_name=user.name,
+                first_name=user.first_name,
+                last_name=user.last_name,
                 is_email_verified=is_email_verified
             )
             created_user = await self.user_repo.create_user(request)
-            return ActivityStatus(code=200, message="User created successfully", data=UserResponseDto.from_entity(created_user))
+            return ActivityStatus(code=200, message="User created successfully",
+                                  data=UserResponseDto.from_entity(created_user))
         except Exception as e:
             return ActivityStatus(code=500, message="Failed to create user")
 
@@ -75,15 +77,35 @@ class UserService:
         return UserResponseDto.from_entity(user)
 
     async def user_exists_by_email(self, email: str) -> bool:
-       return await self.user_repo.user_exists_by_email(email=email)
+        return await self.user_repo.user_exists_by_email(email=email)
 
-    async def update_user_profile(self, email: str, user: UpdateUserProfile) -> ActivityStatus:
+    async def login(self, email: str, password: str) -> ActivityStatus[LoginResponseDto]:
+        """Login user by email and password."""
+        user = await self.user_repo.get_user_by_email(email=email)
+        if user is None:
+            return ActivityStatus(code=404, message="No account found")
+
+        if not user.isactive:
+            return ActivityStatus(code=403, message="Account is inactive")
+
+        if not JwtService.verify_password(password, db_password=user.password):
+            return ActivityStatus(code=401, message="Invalid credentials")
+
+        token_data = TokenData(
+            email=str(user.email)
+        )
+        jwt_token = JwtService.generate_token(token_data.__dict__)
+
+        return ActivityStatus(code=200, message="Login successful", data=LoginResponseDto.from_entity(user, jwt_token))
+
+    async def update_user_profile(self, email: str, user: UpdateUserProfile) -> ActivityStatus[UserResponseDto]:
         existing_user = await self.user_repo.get_user_by_email(email=email)
         if existing_user is None:
             return ActivityStatus(code=404, message="User not found")
 
         existing_user.profile_picture = user.profile_picture
-        existing_user.full_name = user.name
+        existing_user.first_name = user.first_name
+        existing_user.last_name = user.last_name
 
         updated_user = await self.user_repo.update_user_profile(existing_user)
         return ActivityStatus(code=200, message="User created successfully",

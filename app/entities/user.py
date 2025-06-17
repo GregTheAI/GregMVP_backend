@@ -13,7 +13,8 @@ class User(AuditTrail, SQLModel, table=True):
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     email: EmailStr = Field(unique=True, index=True, max_length=255)
-    full_name: str | None = Field(default=None, index=True, max_length=255)
+    first_name: str | None = Field(default=None, index=True, max_length=255)
+    last_name: str | None = Field(default=None, index=True, max_length=255)
     username: str = Field(unique=True, index=True, max_length=50)
     password: str | None = Field(default=None, index=True)
     profile_picture: str | None = Field(default=None, index=True)

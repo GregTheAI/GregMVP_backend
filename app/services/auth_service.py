@@ -4,7 +4,7 @@ from starlette.responses import RedirectResponse
 
 from app.core.config import settings
 from app.dtos.activity_status import ActivityStatus
-from app.dtos.auth_dto import OauthResponseDto
+from app.dtos.auth_dto import OauthResponseDto, GoogleAuthUser, TokenData
 from app.dtos.user_dto import RegisterUser, UpdateUserProfile
 from app.services.jwt_service import JwtService
 from app.services.user_service import UserService
@@ -17,8 +17,6 @@ class AuthService:
         self.user_service: UserService = user_service
         self.oauth = OAuth(settings)
 
-        scope: str = 'openid email profile'
-
         self.oauth.register(
             name='google',
             client_id=settings.GOOGLE_CLIENT_ID,
@@ -26,14 +24,6 @@ class AuthService:
             server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
             client_kwargs={'scope': 'openid email profile'}
         )
-
-        # self.oauth.register(
-        #     name='microsoft',
-        #     client_id=os.getenv("MICROSOFT_CLIENT_ID"),
-        #     client_secret=os.getenv("MICROSOFT_CLIENT_SECRET"),
-        #     server_metadata_url='https://login.microsoftonline.com/common/v2.0/.well-known/openid-configuration',
-        #     client_kwargs={'scope': 'openid email profile'}
-        # )
 
     async def create_oauth_client(self, request: Request, provider: str) -> ActivityStatus:
         try:
@@ -49,27 +39,30 @@ class AuthService:
         except Exception as e:
             return ActivityStatus(code=500, message="Failed to create OAuth client")
 
+
     async def get_oauth_user(self, request: Request, provider: str):
         redirect_url = f"{settings.FRONTEND_URL}?token="
         try:
             token = await self.oauth.create_client(provider).authorize_access_token(request)
-            user = token["userinfo"]
+            user: GoogleAuthUser = token["userinfo"]
 
             if user is None:
                 return ActivityStatus(code=401, message="Authentication failed")
 
-            user_exists = await self.user_service.user_exists_by_email(email=user.email)
+            user_email = str(user.email)
+
+            user_exists = await self.user_service.user_exists_by_email(email=user_email)
 
             if user_exists:
-                payload = UpdateUserProfile(profile_picture=user.picture,
-                                            name=user.name)
-                await self.user_service.update_user_profile(user.email, payload)
+                payload = UpdateUserProfile(profile_picture=user.picture, first_name=user.given_name, last_name=user.family_name)
+                await self.user_service.update_user_profile(user_email, payload)
             else:
                 payload = RegisterUser(email=user.email, provider=provider, profile_picture=user.picture,
-                                       name=user.name)
+                                       firstName=user.given_name, lastName=user.family_name)
                 await self.user_service.create_user(payload)
 
-            jwt_token = JwtService.generate_token(user)
+            token_data = TokenData(email= user_email)
+            jwt_token = JwtService.generate_token(token_data.__dict__)
             redirect_url = redirect_url + jwt_token
             return RedirectResponse(redirect_url)
         except Exception as e:
