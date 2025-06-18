@@ -1,7 +1,9 @@
 import uuid
 from datetime import datetime
+from typing import ClassVar
 
 from pydantic import EmailStr
+from sqlalchemy.orm import relationship
 from sqlmodel import Field, Relationship, SQLModel
 
 from app.entities.audit_trail import AuditTrail
@@ -11,7 +13,6 @@ class User(AuditTrail, SQLModel, table=True):
     __tablename__ = "users"
     __table_args__ = {"extend_existing": True}
 
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     email: EmailStr = Field(unique=True, index=True, max_length=255)
     first_name: str | None = Field(default=None, index=True, max_length=255)
     last_name: str | None = Field(default=None, index=True, max_length=255)
@@ -19,9 +20,11 @@ class User(AuditTrail, SQLModel, table=True):
     password: str | None = Field(default=None, index=True)
     profile_picture: str | None = Field(default=None, index=True)
     provider: str = Field(default="direct", index=True, max_length=50)
-    subscription_id: uuid.UUID = Field(foreign_key="subscriptions.id")
     role_id: uuid.UUID | None = Field(foreign_key="user_roles.id")
     is_active: bool = True
     is_superuser: bool = False
     is_email_verified: bool = False
     last_login: datetime = Field(default_factory=datetime.utcnow)
+
+    user_subscriptions: ClassVar = relationship("UserSubscription", back_populates="user")
+

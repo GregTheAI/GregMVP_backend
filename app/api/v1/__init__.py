@@ -14,5 +14,5 @@ api_router.include_router(conversations.router, prefix="/conversations", depende
 
 api_router.include_router(customers.router, prefix="/customers", tags=["customers"], dependencies=[Depends(bearer_scheme)])
 
-api_router.include_router(upload.router, prefix="/upload", tags=["Uploads"], dependencies=[Depends(bearer_scheme)])
+api_router.include_router(upload.router, prefix="/upload", tags=["Uploads"], dependencies=[Depends(get_current_user)])
 

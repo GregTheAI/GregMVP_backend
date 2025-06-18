@@ -72,6 +72,11 @@ class Settings(BaseSettings):
     LOG_SOURCE_ID: str | None = None
     LOG_SOURCE_TOKEN: str | None = None
 
+    S3_BUCKET: str | None = None
+    AWS_ACCESS_KEY: str | None = None
+    AWS_SECRET_KEY: str | None = None
+    OPENAI_API_KEY: str | None = None
+
     def get(self, key: str, default=None):
         return getattr(self, key, default)
 

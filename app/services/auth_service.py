@@ -1,4 +1,5 @@
 from authlib.integrations.starlette_client import OAuth
+from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.requests import Request
 from starlette.responses import RedirectResponse
 
@@ -40,7 +41,7 @@ class AuthService:
             return ActivityStatus(code=500, message="Failed to create OAuth client")
 
 
-    async def get_oauth_user(self, request: Request, provider: str):
+    async def get_oauth_user(self, request: Request, provider: str, db: AsyncSession) -> ActivityStatus:
         redirect_url = f"{settings.FRONTEND_URL}?token="
         try:
             token = await self.oauth.create_client(provider).authorize_access_token(request)
@@ -59,7 +60,7 @@ class AuthService:
             else:
                 payload = RegisterUser(email=user.email, provider=provider, profile_picture=user.picture,
                                        firstName=user.given_name, lastName=user.family_name)
-                await self.user_service.create_user(payload)
+                await self.user_service.create_user(payload, db)
 
             token_data = TokenData(email= user_email)
             jwt_token = JwtService.generate_token(token_data.__dict__)

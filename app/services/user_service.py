@@ -1,12 +1,16 @@
+from datetime import datetime, timedelta
+
+from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends
 
 from app.dtos.activity_status import ActivityStatus
 from app.dtos.auth_dto import TokenData, LoginResponseDto
 from app.dtos.user_dto import UserResponseDto, RegisterUser, UpdateUserProfile
-from app.entities import User
+from app.entities import User, UserSubscription
 from app.repositories.role_repository import RoleRepository
 from app.repositories.subscription_repository import SubscriptionRepository
 from app.repositories.user_repository import UserRepository
+from app.repositories.user_subscription_repository import UserSubscriptionRepository
 from app.services.jwt_service import JwtService
 
 
@@ -14,12 +18,13 @@ class UserService:
     """Service for user-related operations."""
 
     def __init__(self, user_repo=Depends(UserRepository), subscription_repo=Depends(SubscriptionRepository),
-                 role_repo=Depends(RoleRepository)):
+                 role_repo=Depends(RoleRepository), user_subscription_repo: UserSubscriptionRepository =Depends(UserSubscriptionRepository)):
         self.user_repo: UserRepository = user_repo
         self.subscription_repo: SubscriptionRepository = subscription_repo
         self.role_repo: RoleRepository = role_repo
+        self.user_subscription_repo: UserSubscriptionRepository = user_subscription_repo
 
-    async def create_user(self, user: RegisterUser) -> ActivityStatus:
+    async def create_user(self, user: RegisterUser, db: AsyncSession) -> ActivityStatus:
         """Create a new user in the database."""
         try:
             email_str = str(user.email)
@@ -27,8 +32,6 @@ class UserService:
             if existing_user:
                 return ActivityStatus(code=400, message="Email already registered")
 
-            # standard_user - role for the user
-            # get subscription by name from the db
             free_plan = await self.subscription_repo.get_subscription_by_name("free")
             if free_plan is None:
                 return ActivityStatus(code=404, message="Free subscription plan not found")
@@ -36,19 +39,16 @@ class UserService:
             free_plan_id = free_plan.id
 
             user_role = await self.role_repo.get_role_by_name("standard_user")
-
             if user_role is None:
                 return ActivityStatus(code=404, message="Standard user role not found")
 
             user_role_id = user_role.id
-            # username should extract from email text before @
             username = email_str.split('@')[0]
             if user.password is not None:
                 user.password = JwtService.hash_password(user.password)
 
             is_email_verified = False
             if user.provider != "direct":
-                # If the user is registering through an OAuth provider, we don't need a password
                 is_email_verified = True
 
             request = User(
@@ -64,9 +64,28 @@ class UserService:
                 is_email_verified=is_email_verified
             )
             created_user = await self.user_repo.create_user(request)
+            if created_user is None:
+                await db.rollback()
+                return ActivityStatus(code=424, message="Failed to create user")
+
+            start_date = datetime.utcnow()
+            end_date = start_date + timedelta(days=29)
+            user_subscription_payload = UserSubscription(
+                user_id=created_user.id,
+                subscription_id=free_plan_id,
+                start_date=start_date,
+                end_date=end_date
+            )
+
+            created_user_subscription = await self.user_subscription_repo.create_user_subscription(user_subscription_payload)
+            if created_user_subscription is None:
+                await db.rollback()
+                return ActivityStatus(code=424, message="Failed to setup user subscription")
+
             return ActivityStatus(code=200, message="User created successfully",
                                   data=UserResponseDto.from_entity(created_user))
         except Exception as e:
+            await db.rollback()
             return ActivityStatus(code=500, message="Failed to create user")
 
     async def get_user_by_email(self, email: str) -> UserResponseDto | None:
@@ -85,7 +104,7 @@ class UserService:
         if user is None:
             return ActivityStatus(code=404, message="No account found")
 
-        if not user.isactive:
+        if not user.is_active:
             return ActivityStatus(code=403, message="Account is inactive")
 
         if not JwtService.verify_password(password, db_password=user.password):
