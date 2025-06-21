@@ -75,6 +75,8 @@ class Settings(BaseSettings):
     S3_BUCKET: str | None = None
     AWS_ACCESS_KEY: str | None = None
     AWS_SECRET_KEY: str | None = None
+    AWS_REGION: str | None = None
+    AWS_S3_BUCKET: str | None = None
     OPENAI_API_KEY: str | None = None
 
     def get(self, key: str, default=None):

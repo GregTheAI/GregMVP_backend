@@ -25,7 +25,7 @@ async def register(request: RegisterUserDto, user_service: UserService = Depends
 
 
 @router.post("/login")
-async def login(request: LoginRequestDto, user_service: UserService = Depends(get_user_service)):
+async def login(request: LoginRequestDto, user_service: UserService = Depends(get_user_service)) -> JSONResponse:
 
     response = await user_service.login(str(request.email), request.password)
     return api_response(code=response.code, data=response.data, message=response.message)

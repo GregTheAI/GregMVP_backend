@@ -2,7 +2,6 @@ from typing import BinaryIO
 
 from docx import Document
 from openai import AsyncOpenAI
-from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
 
 from app.core.config import settings
 
@@ -10,31 +9,6 @@ from app.core.config import settings
 class ExtractorService:
     def __init__(self):
         self.openai_client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
-
-    @staticmethod
-    def _parse_content(content: str):
-        import re
-
-        match_summary = re.search(r"Summary:\s*(.*?)\s*Key Actions:", content, re.DOTALL)
-        match_actions = re.search(r"Key Actions:\s*(.*?)\s*KPIs:", content, re.DOTALL)
-        match_kpis = re.search(r"KPIs:\s*(.*)", content, re.DOTALL)
-
-        return {
-            "summary": match_summary.group(1).strip() if match_summary else "",
-            "actions": match_actions.group(1).strip() if match_actions else "",
-            "kpis": match_kpis.group(1).strip() if match_kpis else ""
-        }
-
-    async def extract_info_from_text(self, text: str):
-        response = await self.openai_client.chat.completions.create(
-            model="gpt-4",
-            messages=[
-            ChatCompletionSystemMessageParam(role="system", content="Extract summary, key actions, and KPIs."),
-            ChatCompletionUserMessageParam(role="user", content=text)
-            ])
-
-        content: str = response.choices[0].message.content
-        return self._parse_content(content)
 
     @staticmethod
     def _extract_docx_content(file) -> str:
@@ -79,3 +53,15 @@ class ExtractorService:
         if extractor is None:
             return None
         return extractor(file)
+
+    async def handle_extraction(self, file: BinaryIO) -> dict:
+        raw_text = self.extract_text_from_file(file, file_name=file.name)
+        if not raw_text:
+            return {"error": "Unsupported file type or empty content."}
+
+        # store the raw text in the database or any storage
+
+
+
+
+        return self._parse_content(content)

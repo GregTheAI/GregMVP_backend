@@ -14,11 +14,17 @@ class BaseRepository(Generic[T]):
         self.model = model
         self.db = db
 
-    async def get_all(self, filters: Optional[dict] = None, page_index: int = 1, page_size: int = 10) -> PageResult:
+    async def get_all(self, filters: Optional[dict] = None, page_index: int = 1, page_size: int = 10, sort_dir="asc") -> PageResult:
         query = select(self.model)
         if filters:
             for field, value in filters.items():
                 query = query.where(getattr(self.model, field) == value)
+
+        if sort_dir == "asc":
+            query = query.order_by(self.model.created_at.asc())
+        else:
+            query = query.order_by(self.model.created_at.desc())
+
         total_count = (await self.db.execute(select([self.model]).where(
             *(getattr(self.model, field) == value for field, value in (filters or {}).items())
         ))).scalars().count() if filters else (await self.db.execute(select(self.model))).scalars().count()
