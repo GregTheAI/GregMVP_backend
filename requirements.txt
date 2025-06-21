@@ -79,5 +79,6 @@ tzdata==2025.2
 tzlocal==5.3.1
 urllib3==2.4.0
 uvicorn==0.34.3
+websockets==15.0.1
 xlrd==1.2.0
 xlsxwriter==3.2.5
