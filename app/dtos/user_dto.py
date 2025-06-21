@@ -5,15 +5,25 @@ from pydantic import Field, BaseModel, EmailStr
 from app.entities import User
 
 
-@dataclass
-class UserResponseDto:
+# @dataclass
+class UserResponseDto(BaseModel):
     id: str
     email: str
+    first_name: str = Field(alias="firstName")
+    last_name: str | None = Field(default=None, alias="lastName")
+    username: str | None = Field(default=None)
+    is_email_verified: bool = Field(default=False, alias="isEmailVerified")
+    profile_picture: str | None = Field(default=None, alias="profilePicture")
 
-    @classmethod
-    def from_entity(cls, data: User) -> "UserResponseDto":
-        return cls(id=str(data.id),
-                   email=str(data.email))
+    # @classmethod
+    # def from_entity(cls, data: User) -> "UserResponseDto":
+    #     return cls(id=str(data.id),
+    #                email=str(data.email),
+    #                first_name=data.first_name,
+    #                last_name=data.last_name,
+    #                is_email_verified=data.is_email_verified,
+    #                profile_picture=data.profile_picture,
+    #                  username=data.username)
 
 
 class RegisterUserDto(BaseModel):

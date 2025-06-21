@@ -16,7 +16,7 @@ def api_ok_response(data: T = None, message: str = "Success") -> JSONResponse:
         data=data,
         errors=None
     )
-    return JSONResponse(status_code=HTTP_200_OK, content=response.dict())
+    return JSONResponse(status_code=HTTP_200_OK, content=response.model_dump(by_alias=True))
 
 def api_created_response(data: T = None, message: str = "Created successfully") -> JSONResponse:
     response = ApiResponse[T](
@@ -25,7 +25,7 @@ def api_created_response(data: T = None, message: str = "Created successfully") 
         data=data,
         errors=None
     )
-    return JSONResponse(status_code=HTTP_201_CREATED, content=response.dict())
+    return JSONResponse(status_code=HTTP_201_CREATED, content=response.model_dump(by_alias=True))
 
 def api_bad_response(message: str = "Bad request", errors: Optional[Dict] = None) -> JSONResponse:
     response = ApiResponse(
@@ -34,7 +34,7 @@ def api_bad_response(message: str = "Bad request", errors: Optional[Dict] = None
         data=None,
         errors=errors
     )
-    return JSONResponse(status_code=HTTP_400_BAD_REQUEST, content=response.dict())
+    return JSONResponse(status_code=HTTP_400_BAD_REQUEST, content=response.model_dump(by_alias=True))
 
 def api_not_found(message: str = "Not found", errors: Optional[Dict] = None) -> JSONResponse:
     response = ApiResponse(
@@ -43,7 +43,7 @@ def api_not_found(message: str = "Not found", errors: Optional[Dict] = None) -> 
         data=None,
         errors=errors
     )
-    return JSONResponse(status_code=HTTP_404_NOT_FOUND, content=response.dict())
+    return JSONResponse(status_code=HTTP_404_NOT_FOUND, content=response.model_dump(by_alias=True))
 
 def api_server_error(message: str = "Internal server error", errors: Optional[Dict] = None) -> JSONResponse:
     response = ApiResponse(
@@ -52,7 +52,7 @@ def api_server_error(message: str = "Internal server error", errors: Optional[Di
         data=None,
         errors=errors
     )
-    return JSONResponse(status_code=HTTP_500_INTERNAL_SERVER_ERROR, content=response.dict())
+    return JSONResponse(status_code=HTTP_500_INTERNAL_SERVER_ERROR, content=response.model_dump(by_alias=True))
 
 def api_response(code: int, message: str, data: T, errors: Optional[Dict] = None) -> JSONResponse:
     response = ApiResponse(
@@ -61,4 +61,4 @@ def api_response(code: int, message: str, data: T, errors: Optional[Dict] = None
         data=data,
         errors=errors
     )
-    return JSONResponse(status_code=code, content=response.model_dump())
+    return JSONResponse(status_code=code, content=response.model_dump(by_alias=True))

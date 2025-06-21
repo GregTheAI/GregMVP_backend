@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
-from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dtos.activity_status import ActivityStatus
 from app.dtos.auth_dto import TokenData, LoginResponseDto
@@ -18,7 +18,8 @@ class UserService:
     """Service for user-related operations."""
 
     def __init__(self, user_repo=Depends(UserRepository), subscription_repo=Depends(SubscriptionRepository),
-                 role_repo=Depends(RoleRepository), user_subscription_repo: UserSubscriptionRepository =Depends(UserSubscriptionRepository)):
+                 role_repo=Depends(RoleRepository),
+                 user_subscription_repo: UserSubscriptionRepository = Depends(UserSubscriptionRepository)):
         self.user_repo: UserRepository = user_repo
         self.subscription_repo: SubscriptionRepository = subscription_repo
         self.role_repo: RoleRepository = role_repo
@@ -77,7 +78,8 @@ class UserService:
                 end_date=end_date
             )
 
-            created_user_subscription = await self.user_subscription_repo.create_user_subscription(user_subscription_payload)
+            created_user_subscription = await self.user_subscription_repo.create_user_subscription(
+                user_subscription_payload)
             if created_user_subscription is None:
                 await db.rollback()
                 return ActivityStatus(code=424, message="Failed to setup user subscription")
@@ -93,7 +95,9 @@ class UserService:
         user = await self.user_repo.get_user_by_email(email=email)
         if user is None:
             return None
-        return UserResponseDto.from_entity(user)
+        return UserResponseDto(id=str(user.id), email=str(user.email), firstName=user.first_name,
+                               lastName=user.last_name, profilePicture=user.profile_picture,
+                               isEmailVerified=user.is_email_verified, username=user.username)
 
     async def user_exists_by_email(self, email: str) -> bool:
         return await self.user_repo.user_exists_by_email(email=email)
