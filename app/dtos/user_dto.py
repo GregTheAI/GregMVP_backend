@@ -14,6 +14,7 @@ class UserResponseDto(BaseModel):
     username: str | None = Field(default=None)
     is_email_verified: bool = Field(default=False, alias="isEmailVerified")
     profile_picture: str | None = Field(default=None, alias="profilePicture")
+    token: str | None = Field(default=None, alias="token")
 
     # @classmethod
     # def from_entity(cls, data: User) -> "UserResponseDto":

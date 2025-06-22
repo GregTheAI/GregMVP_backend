@@ -10,6 +10,7 @@ from app.dtos.auth_dto import OauthResponseDto, GoogleAuthUser, TokenData
 from app.dtos.user_dto import RegisterUser, UpdateUserProfile
 from app.services.jwt_service import JwtService
 from app.services.user_service import UserService
+from app.utils.constants.constants import AuthConstants
 
 
 class AuthService:
@@ -72,7 +73,7 @@ class AuthService:
             jwt_token = JwtService.generate_token(token_data.__dict__)
             response = RedirectResponse(redirect_url)
             response.set_cookie(
-                key="access_token",
+                key=AuthConstants.ACCESS_TOKEN_COOKIE_KEY,
                 value=jwt_token,
                 httponly=settings.COOKIE_HTTPONLY,
                 secure=True,

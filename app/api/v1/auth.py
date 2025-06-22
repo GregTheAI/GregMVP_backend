@@ -9,6 +9,7 @@ from app.dtos.auth_dto import LoginRequestDto
 from app.dtos.user_dto import RegisterUserDto, RegisterUser
 from app.services import AuthService, UserService
 from app.services.dependencies import get_user_service, get_auth_service
+from app.utils.constants.constants import AuthConstants
 from app.utils.helpers.api_helpers import api_bad_response, api_created_response, api_response
 
 router = APIRouter(tags=["auth"])
@@ -20,9 +21,21 @@ async def register(request: RegisterUserDto, user_service: UserService = Depends
     if create_user_response.isSuccess is False:
         return api_bad_response(create_user_response.message)
 
-    return api_created_response(
+    token = create_user_response.data.token
+
+    api_resp = api_created_response(
         data=create_user_response.data,
         message=create_user_response.message)
+
+    api_resp.set_cookie(
+                key=AuthConstants.ACCESS_TOKEN_COOKIE_KEY,
+                value=token,
+                httponly=settings.COOKIE_HTTPONLY,
+                secure=True,
+                samesite="lax"
+            )
+
+    return api_resp
 
 
 @router.post("/login")
@@ -31,13 +44,13 @@ async def login(request: LoginRequestDto, user_service: UserService = Depends(ge
     response = await user_service.login(str(request.email), request.password)
     api_resp = api_response(code=response.code, data=response.data, message=response.message)
     api_resp.set_cookie(
-                key="access_token",
+                key=AuthConstants.ACCESS_TOKEN_COOKIE_KEY,
                 value=response.data.token,
                 httponly=settings.COOKIE_HTTPONLY,
                 secure=True,
                 samesite="lax"
             )
-    return api_response(code=response.code, data=response.data, message=response.message)
+    return api_resp
 
 
 @router.get("/login/{provider}")

@@ -84,12 +84,15 @@ class UserService:
                 await db.rollback()
                 return ActivityStatus(code=424, message="Failed to setup user subscription")
 
+            token_data = TokenData(email= str(created_user.email))
+            jwt_token = JwtService.generate_token(token_data.__dict__)
+
             return ActivityStatus(code=200, message="User created successfully",
                                   data=UserResponseDto(id=str(created_user.id), firstName=created_user.first_name,
                                                        lastName=created_user.last_name, email=str(created_user.email),
                                                        profilePicture=created_user.profile_picture,
                                                        isEmailVerified=created_user.is_email_verified,
-                                                       username=created_user.username))
+                                                       username=created_user.username, token=jwt_token))
         except Exception as e:
             await db.rollback()
             return ActivityStatus(code=500, message="Failed to create user")

@@ -5,6 +5,7 @@ from jose import jwt, JWTError
 from app.dtos.user_dto import UserResponseDto
 from app.services.user_service import UserService
 from app.core.config import settings
+from app.utils.constants.constants import AuthConstants
 
 security = HTTPBearer(auto_error=False)
 ALGORITHM = "HS256"
@@ -14,7 +15,7 @@ async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
     user_service: UserService = Depends()
 ) -> UserResponseDto:
-    token = credentials.credentials if credentials else request.cookies.get("access_token")
+    token = credentials.credentials if credentials else request.cookies.get(AuthConstants.ACCESS_TOKEN_COOKIE_KEY)
     if not token:
         raise HTTPException(status_code=401, detail="Missing authentication token")
     return await auth_user(token, user_service)
