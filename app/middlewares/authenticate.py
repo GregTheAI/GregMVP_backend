@@ -6,14 +6,17 @@ from app.dtos.user_dto import UserResponseDto
 from app.services.user_service import UserService
 from app.core.config import settings
 
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 ALGORITHM = "HS256"
 
 async def get_current_user(
+    request: Request,
     credentials: HTTPAuthorizationCredentials = Depends(security),
     user_service: UserService = Depends()
 ) -> UserResponseDto:
-    token = credentials.credentials
+    token = credentials.credentials if credentials else request.cookies.get("access_token")
+    if not token:
+        raise HTTPException(status_code=401, detail="Missing authentication token")
     return await auth_user(token, user_service)
 
 

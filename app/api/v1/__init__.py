@@ -12,7 +12,7 @@ api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 api_router.include_router(conversations.router, prefix="/conversations", tags=["conversations"])
 
 api_router.include_router(customers.router, prefix="/customers", tags=["customers"], dependencies=[Depends(bearer_scheme)])
-api_router.include_router(user.router, prefix="/users", tags=["users"], dependencies=[Depends(bearer_scheme)])
+api_router.include_router(user.router, prefix="/users", tags=["users"])
 
 api_router.include_router(upload.router, prefix="/upload", tags=["Uploads"], dependencies=[Depends(get_current_user)])
 

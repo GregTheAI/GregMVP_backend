@@ -47,7 +47,7 @@ class AuthService:
 
 
     async def get_oauth_user(self, request: Request, provider: str, db: AsyncSession) -> RedirectResponse:
-        redirect_url = f"{settings.FRONTEND_URL}?token="
+        redirect_url = settings.FRONTEND_URL
         try:
             token = await self.oauth.create_client(provider).authorize_access_token(request)
             user: GoogleAuthUser = token["userinfo"]
@@ -74,7 +74,7 @@ class AuthService:
             response.set_cookie(
                 key="access_token",
                 value=jwt_token,
-                httponly=False,
+                httponly=settings.COOKIE_HTTPONLY,
                 secure=True,
                 samesite="lax"
             )
