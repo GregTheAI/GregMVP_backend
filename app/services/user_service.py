@@ -85,7 +85,11 @@ class UserService:
                 return ActivityStatus(code=424, message="Failed to setup user subscription")
 
             return ActivityStatus(code=200, message="User created successfully",
-                                  data=UserResponseDto.from_entity(created_user))
+                                  data=UserResponseDto(id=str(created_user.id), firstName=created_user.first_name,
+                                                       lastName=created_user.last_name, email=str(created_user.email),
+                                                       profilePicture=created_user.profile_picture,
+                                                       isEmailVerified=created_user.is_email_verified,
+                                                       username=created_user.username))
         except Exception as e:
             await db.rollback()
             return ActivityStatus(code=500, message="Failed to create user")
@@ -132,4 +136,8 @@ class UserService:
 
         updated_user = await self.user_repo.update_user_profile(existing_user)
         return ActivityStatus(code=200, message="User created successfully",
-                              data=UserResponseDto.from_entity(updated_user))
+                              data=UserResponseDto(id=str(updated_user.id), firstName=updated_user.first_name,
+                                                       lastName=updated_user.last_name, email=str(updated_user.email),
+                                                       profilePicture=updated_user.profile_picture,
+                                                       isEmailVerified=updated_user.is_email_verified,
+                                                       username=updated_user.username))

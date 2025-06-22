@@ -4,6 +4,7 @@ from starlette.requests import Request
 from starlette.responses import RedirectResponse
 
 from app.core.config import settings
+from app.core.log_config import configure_logger
 from app.dtos.activity_status import ActivityStatus
 from app.dtos.auth_dto import OauthResponseDto, GoogleAuthUser, TokenData
 from app.dtos.user_dto import RegisterUser, UpdateUserProfile
@@ -15,6 +16,7 @@ class AuthService:
     """Service for user-related operations."""
 
     def __init__(self, user_service: UserService):
+        self.logger = configure_logger(__name__)
         self.user_service: UserService = user_service
         self.oauth = OAuth(settings)
 
@@ -27,6 +29,8 @@ class AuthService:
         )
 
     async def create_oauth_client(self, request: Request, provider: str) -> ActivityStatus:
+
+        self.logger.info(f"received request to initiate {provider} OAuth login")
         try:
             redirect_url = f"{settings.BACKEND_URL}api/v1/auth/callback/{provider}"
             redirect_response = await self.oauth.create_client(provider).authorize_redirect(request,
@@ -38,22 +42,24 @@ class AuthService:
             return ActivityStatus(code=status_code, message=f"Redirect to {provider} OAuth",
                                   data=OauthResponseDto.from_entity(url_response))
         except Exception as e:
+            self.logger.error(f"Error initiating OAuth login for {provider}: {e}", exc_info=True)
             return ActivityStatus(code=500, message="Failed to create OAuth client")
 
 
-    async def get_oauth_user(self, request: Request, provider: str, db: AsyncSession) -> ActivityStatus:
+    async def get_oauth_user(self, request: Request, provider: str, db: AsyncSession) -> RedirectResponse:
         redirect_url = f"{settings.FRONTEND_URL}?token="
         try:
             token = await self.oauth.create_client(provider).authorize_access_token(request)
             user: GoogleAuthUser = token["userinfo"]
 
             if user is None:
-                return ActivityStatus(code=401, message="Authentication failed")
+                return RedirectResponse(redirect_url)
 
             user_email = str(user.email)
 
             user_exists = await self.user_service.user_exists_by_email(email=user_email)
 
+            self.logger.info(f"User exists: {user_exists} for email: {user_email}")
             if user_exists:
                 payload = UpdateUserProfile(profile_picture=user.picture, first_name=user.given_name, last_name=user.family_name)
                 await self.user_service.update_user_profile(user_email, payload)
@@ -64,7 +70,16 @@ class AuthService:
 
             token_data = TokenData(email= user_email)
             jwt_token = JwtService.generate_token(token_data.__dict__)
-            redirect_url = redirect_url + jwt_token
-            return RedirectResponse(redirect_url)
+            response = RedirectResponse(redirect_url)
+            response.set_cookie(
+                key="access_token",
+                value=jwt_token,
+                httponly=False,
+                secure=True,
+                samesite="lax"
+            )
+            self.logger.info("OAuth user successfully retrieved and processed.")
+            return response
         except Exception as e:
+            self.logger.error(f"Error during OAuth callback: {e}", exc_info=True)
             return RedirectResponse(redirect_url)

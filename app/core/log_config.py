@@ -17,6 +17,10 @@ def configure_logger(logger_name: str | None = None) -> Logger:
 
     logger.setLevel(logging.INFO)
 
+    #add console handler
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.INFO)
+
     handler = LogtailHandler(source_token=settings.LOG_SOURCE_TOKEN, host=settings.LOG_URL)
     # formatter = logging.Formatter(json.dumps({
     #     "message": "%(message)s",
@@ -30,10 +34,19 @@ def configure_logger(logger_name: str | None = None) -> Logger:
 
     formatter = logging.Formatter(f"%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     handler.setFormatter(formatter)
+    console_handler.setFormatter(formatter)
 
     logging.getLogger("alembic.runtime.migration").addHandler(handler)
+    logging.getLogger("alembic.runtime.migration").addHandler(console_handler)
     logging.getLogger("uvicorn.access").addHandler(handler)
+    logging.getLogger("uvicorn.access").addHandler(console_handler)
+    logging.getLogger("uvicorn.asgi").addHandler(handler)
+    logging.getLogger("uvicorn").addHandler(handler)
     logging.getLogger("uvicorn.error").addHandler(handler)
+    logging.getLogger("uvicorn.error").addHandler(console_handler)
+    logging.getLogger("sqlalchemy.engine").addHandler(handler)
+    logging.getLogger("sqlalchemy.engine").addHandler(console_handler)
+    logging.getLogger("sqlalchemy.orm").addHandler(handler)
     logger.addHandler(handler)
     return logger
 
