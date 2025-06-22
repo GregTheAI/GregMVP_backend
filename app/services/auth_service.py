@@ -76,7 +76,7 @@ class AuthService:
                 key=AuthConstants.ACCESS_TOKEN_COOKIE_KEY,
                 value=jwt_token,
                 httponly=settings.COOKIE_HTTPONLY,
-                secure=True,
+                secure=settings.COOKIE_HTTPONLY,
                 samesite="lax"
             )
             self.logger.info("OAuth user successfully retrieved and processed.")
