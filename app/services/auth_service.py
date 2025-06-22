@@ -72,12 +72,14 @@ class AuthService:
             token_data = TokenData(email= user_email)
             jwt_token = JwtService.generate_token(token_data.__dict__)
             response = RedirectResponse(redirect_url)
+            self.logger.info(f"Received token: {jwt_token}")
             response.set_cookie(
                 key=AuthConstants.ACCESS_TOKEN_COOKIE_KEY,
                 value=jwt_token,
                 httponly=True,
                 secure=False,
-                samesite="lax"
+                samesite="lax",
+                domain="localhost"
             )
             self.logger.info("OAuth user successfully retrieved and processed.")
             return response
