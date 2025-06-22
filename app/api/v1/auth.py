@@ -3,6 +3,7 @@ from fastapi.params import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import JSONResponse
 
+from app.core.config import settings
 from app.core.storage.dependencies import get_pg_database
 from app.dtos.auth_dto import LoginRequestDto
 from app.dtos.user_dto import RegisterUserDto, RegisterUser
@@ -28,6 +29,14 @@ async def register(request: RegisterUserDto, user_service: UserService = Depends
 async def login(request: LoginRequestDto, user_service: UserService = Depends(get_user_service)) -> JSONResponse:
 
     response = await user_service.login(str(request.email), request.password)
+    api_resp = api_response(code=response.code, data=response.data, message=response.message)
+    api_resp.set_cookie(
+                key="access_token",
+                value=response.data.token,
+                httponly=settings.COOKIE_HTTPONLY,
+                secure=True,
+                samesite="lax"
+            )
     return api_response(code=response.code, data=response.data, message=response.message)
 
 
