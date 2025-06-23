@@ -36,7 +36,7 @@ class AuthService:
             redirect_url = f"{settings.BACKEND_URL}api/v1/auth/callback/{provider}"
             redirect_response = await self.oauth.create_client(provider).authorize_redirect(request,
                                                                                             redirect_uri=redirect_url,
-                                                                                            prompt="consent")
+                                                                                            prompt="consent",state=settings.JWT_SECRET_KEY)
 
             url_response = redirect_response.headers["location"]
             status_code = redirect_response.status_code
@@ -45,7 +45,6 @@ class AuthService:
         except Exception as e:
             self.logger.error(f"Error initiating OAuth login for {provider}: {e}", exc_info=True)
             return ActivityStatus(code=500, message="Failed to create OAuth client")
-
 
     async def get_oauth_user(self, request: Request, provider: str, db: AsyncSession) -> RedirectResponse:
         redirect_url = settings.FRONTEND_URL

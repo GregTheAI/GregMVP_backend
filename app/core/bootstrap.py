@@ -51,10 +51,12 @@ class Bootstrap:
 
         self.app.add_middleware(LogExceptionsMiddleware)
 
-        self.app.add_middleware(SessionMiddleware,
-                                secret_key=settings.JWT_SECRET_KEY,
-                                same_site = settings.COOKIE_SAMESITE,
-                                https_only = settings.COOKIE_SECURE)
+        self.app.add_middleware(
+            SessionMiddleware,
+            secret_key=settings.JWT_SECRET_KEY,
+            same_site=settings.COOKIE_SAMESITE,
+            https_only=settings.COOKIE_SECURE
+        )
 
         if settings.all_cors_origins:
             from starlette.middleware.cors import CORSMiddleware
