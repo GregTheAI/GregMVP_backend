@@ -1,6 +1,4 @@
-import asyncio
 import os
-from pathlib import Path
 
 from fastapi import FastAPI
 from starlette.requests import Request
@@ -53,7 +51,8 @@ class Bootstrap:
 
         self.app.add_middleware(LogExceptionsMiddleware)
 
-        self.app.add_middleware(SessionMiddleware, secret_key=settings.JWT_SECRET_KEY)
+        self.app.add_middleware(SessionMiddleware,
+                                secret_key=settings.JWT_SECRET_KEY)
 
         if settings.all_cors_origins:
             from starlette.middleware.cors import CORSMiddleware
@@ -85,7 +84,6 @@ class Bootstrap:
         async def global_exception_handler(request: Request, ex: Exception):
             self.logger.error(f"Unhandled exception: {ex}", exc_info=True)
             return api_server_error(errors={"detail": str(ex)})
-
 
         @self.app.on_event("shutdown")
         async def shutdown_event():

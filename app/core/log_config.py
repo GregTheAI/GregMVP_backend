@@ -14,40 +14,23 @@ def configure_logger(logger_name: str | None = None) -> Logger:
     import logging
 
     logger = logging.getLogger(logger_name)
-
     logger.setLevel(logging.INFO)
+    logger.propagate = True  # Ensure logs propagate to root
 
-    #add console handler
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.INFO)
+    # Add handlers only if not already present
+    if not any(isinstance(h, LogtailHandler) for h in logger.handlers):
+        handler = LogtailHandler(source_token=settings.LOG_SOURCE_TOKEN, host=settings.LOG_URL)
+        formatter = logging.Formatter(f"%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
 
-    handler = LogtailHandler(source_token=settings.LOG_SOURCE_TOKEN, host=settings.LOG_URL)
-    # formatter = logging.Formatter(json.dumps({
-    #     "message": "%(message)s",
-    #     "level": "%(levelname)s",
-    #     "logger": "%(name)s",
-    #     "time": "%(asctime)s",
-    #     "module": "%(module)s",
-    #     "function": "%(funcName)s",
-    #     "line": "%(lineno)d"
-    # }))
+    if not any(isinstance(h, logging.StreamHandler) for h in logger.handlers):
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(logging.INFO)
+        formatter = logging.Formatter(f"%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        console_handler.setFormatter(formatter)
+        logger.addHandler(console_handler)
 
-    formatter = logging.Formatter(f"%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-    handler.setFormatter(formatter)
-    console_handler.setFormatter(formatter)
-
-    logging.getLogger("alembic.runtime.migration").addHandler(handler)
-    logging.getLogger("alembic.runtime.migration").addHandler(console_handler)
-    logging.getLogger("uvicorn.access").addHandler(handler)
-    logging.getLogger("uvicorn.access").addHandler(console_handler)
-    logging.getLogger("uvicorn.asgi").addHandler(handler)
-    logging.getLogger("uvicorn").addHandler(handler)
-    logging.getLogger("uvicorn.error").addHandler(handler)
-    logging.getLogger("uvicorn.error").addHandler(console_handler)
-    logging.getLogger("sqlalchemy.engine").addHandler(handler)
-    logging.getLogger("sqlalchemy.engine").addHandler(console_handler)
-    logging.getLogger("sqlalchemy.orm").addHandler(handler)
-    logger.addHandler(handler)
     return logger
 
 class LogExceptionsMiddleware(BaseHTTPMiddleware):
