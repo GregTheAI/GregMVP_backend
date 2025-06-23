@@ -78,7 +78,8 @@ class AuthService:
                 httponly=settings.COOKIE_HTTPONLY,
                 secure=settings.COOKIE_SECURE,
                 samesite=settings.COOKIE_SAMESITE,
-                domain=settings.COOKIE_DOMAIN,
+                max_age=3600,
+
             )
             self.logger.info(f"OAuth user successfully retrieved and processed - redirecting to frontend {response.__dict__} headers {response.headers.__dict__}", exc_info=True)
             return response
