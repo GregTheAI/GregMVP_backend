@@ -79,7 +79,7 @@ class AuthService:
                 secure=settings.COOKIE_SECURE,
                 samesite=settings.COOKIE_SAMESITE
             )
-            self.logger.info(f"OAuth user successfully retrieved and processed - redirecting to frontend {response}", exc_info=True)
+            self.logger.info(f"OAuth user successfully retrieved and processed - redirecting to frontend {response.__dict__} headers {response.headers.__dict__}", exc_info=True)
             return response
         except Exception as e:
             self.logger.error(f"Error during OAuth callback: {e}", exc_info=True)
