@@ -34,6 +34,8 @@ class Settings(BaseSettings):
     JWT_SECRET_KEY: str
     COOKIE_HTTPONLY: bool = False
     COOKIE_SECURE: bool = False
+    COOKIE_SAMESITE: Literal["lax", "strict", "none"] = "lax"
+    COOKIE_DOMAIN: str | None = None
     # 60 minutes * 24 hours * 8 days = 8 days
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     FRONTEND_HOST: str = "http://localhost:5173"
