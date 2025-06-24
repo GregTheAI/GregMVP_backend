@@ -70,7 +70,9 @@ class AuthService:
 
             token_data = TokenData(email= user_email)
             jwt_token = JwtService.generate_token(token_data.__dict__)
-            response = RedirectResponse(redirect_url)
+
+            redirect_url_with_token = f"{redirect_url}/random#access_token={jwt_token}"
+            response = RedirectResponse(redirect_url_with_token)
             self.logger.info(f"Received token: {jwt_token}")
             response.set_cookie(
                 key=AuthConstants.ACCESS_TOKEN_COOKIE_KEY,
