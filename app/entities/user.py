@@ -6,7 +6,9 @@ from pydantic import EmailStr
 from sqlalchemy.orm import relationship
 from sqlmodel import Field, Relationship, SQLModel
 
+from app.entities import UserSubscription
 from app.entities.audit_trail import AuditTrail
+from app.entities.user_onboarding import UserOnboarding
 
 
 class User(AuditTrail, SQLModel, table=True):
@@ -26,5 +28,6 @@ class User(AuditTrail, SQLModel, table=True):
     is_email_verified: bool = False
     last_login: datetime = Field(default_factory=datetime.utcnow)
 
-    user_subscriptions: ClassVar = relationship("UserSubscription", back_populates="user")
+    user_subscriptions: ClassVar[UserSubscription] = relationship("UserSubscription", back_populates="user")
+    onboarding: ClassVar[UserOnboarding] = relationship("UserOnboarding", back_populates="user")
 

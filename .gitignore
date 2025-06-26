@@ -34,3 +34,39 @@ htmlcov/
 
 # Migrations
 alembic/
+
+# add ignor files for a vue project
+# Node modules
+node_modules/
+# Build output
+dist/
+# Logs
+npm-debug.log*
+# Dependency directories
+jspm_packages/
+# Optional npm cache directory
+.npm/
+# Optional eslint cache
+.eslintcache
+# Optional REPL history
+.repl_history
+# Optional VS Code extensions
+.vscode-test/
+# Optional cache directories
+.cache-loader/
+# Optional build directories
+build/
+# Optional coverage directory
+coverage/
+# Optional environment variables
+.env.local
+# Optional Docker files
+.docker/
+# Optional Yarn files
+.yarn/
+# Optional pnpm files
+.pnpm/
+# Optional Nuxt.js files
+localhost-key.pem
+localhost.pem
+package-lock.json
