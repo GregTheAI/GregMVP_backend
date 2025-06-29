@@ -41,7 +41,7 @@ class AuthService:
 
         self.logger.info(f"received request to initiate {provider} OAuth login")
         try:
-            redirect_url = f"{settings.BACKEND_URL}api/v1/auth/callback/{provider}"
+            redirect_url = f"{settings.BACKEND_URL}/api/v1/auth/callback/{provider}"
             redirect_response = await self.get_oauth_client(provider).authorize_redirect(request,
                                                                                          redirect_uri=redirect_url,
                                                                                          prompt="consent",
