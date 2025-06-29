@@ -29,14 +29,24 @@ class AuthService:
             client_kwargs={'scope': 'openid email profile'}
         )
 
+        self.oauth_clients = {}
+
+
+    def get_oauth_client(self, provider: str):
+        if provider not in self.oauth_clients:
+            self.oauth_clients[provider] = self.oauth.create_client(provider)
+        return self.oauth_clients[provider]
+
     async def create_oauth_client(self, request: Request, provider: str) -> ActivityStatus:
 
         self.logger.info(f"received request to initiate {provider} OAuth login")
         try:
             redirect_url = f"{settings.BACKEND_URL}api/v1/auth/callback/{provider}"
-            redirect_response = await self.oauth.create_client(provider).authorize_redirect(request,
-                                                                                            redirect_uri=redirect_url,
-                                                                                            prompt="consent",state=settings.JWT_SECRET_KEY)
+            redirect_response = await self.get_oauth_client(provider).authorize_redirect(request,
+                                                                                         redirect_uri=redirect_url,
+                                                                                         prompt="consent",
+                                                                                         state=settings.SESSION_SECRET_KEY
+                                                                                         )
 
             url_response = redirect_response.headers["location"]
             status_code = redirect_response.status_code
@@ -49,7 +59,7 @@ class AuthService:
     async def get_oauth_user(self, request: Request, provider: str, db: AsyncSession) -> RedirectResponse:
         redirect_url = settings.FRONTEND_URL
         try:
-            token = await self.oauth.create_client(provider).authorize_access_token(request)
+            token = await self.get_oauth_client(provider).authorize_access_token(request)
             user: GoogleAuthUser = token["userinfo"]
 
             if user is None:
@@ -61,14 +71,15 @@ class AuthService:
 
             self.logger.info(f"User exists: {user_exists} for email: {user_email}")
             if user_exists:
-                payload = UpdateUserProfile(profile_picture=user.picture, first_name=user.given_name, last_name=user.family_name)
+                payload = UpdateUserProfile(profile_picture=user.picture, first_name=user.given_name,
+                                            last_name=user.family_name)
                 await self.user_service.update_user_profile(user_email, payload)
             else:
                 payload = RegisterUser(email=user.email, provider=provider, profile_picture=user.picture,
                                        firstName=user.given_name, lastName=user.family_name)
                 await self.user_service.create_user(payload, db)
 
-            token_data = TokenData(email= user_email)
+            token_data = TokenData(email=user_email)
             jwt_token = JwtService.generate_token(token_data.__dict__)
 
             redirect_url_with_token = f"{redirect_url}?access_token={jwt_token}"
@@ -83,7 +94,9 @@ class AuthService:
                 max_age=3600,
 
             )
-            self.logger.info(f"OAuth user successfully retrieved and processed - redirecting to frontend {response.__dict__} headers {response.headers.__dict__}", exc_info=True)
+            self.logger.info(
+                f"OAuth user successfully retrieved and processed - redirecting to frontend {response.__dict__} headers {response.headers.__dict__}",
+                exc_info=True)
             return response
         except Exception as e:
             self.logger.error(f"Error during OAuth callback: {e}", exc_info=True)

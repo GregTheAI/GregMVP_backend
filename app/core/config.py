@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     )
     API_V1_STR: str = "/api/v1"
     JWT_SECRET_KEY: str
+    SESSION_SECRET_KEY: str
     COOKIE_HTTPONLY: bool = False
     COOKIE_SECURE: bool = False
     COOKIE_SAMESITE: str | None
