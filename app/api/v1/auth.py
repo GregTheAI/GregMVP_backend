@@ -42,6 +42,10 @@ async def register(request: RegisterUserDto, user_service: UserService = Depends
 async def login(request: LoginRequestDto, user_service: UserService = Depends(get_user_service)) -> JSONResponse:
 
     response = await user_service.login(str(request.email), request.password)
+
+    if response.isSuccess is False or response.data is None:
+        return api_bad_response(response.message)
+
     api_resp = api_response(code=response.code, data=response.data, message=response.message)
     api_resp.set_cookie(
                 key=AuthConstants.ACCESS_TOKEN_COOKIE_KEY,

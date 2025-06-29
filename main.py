@@ -24,7 +24,3 @@ app = FastAPI(
 )
 
 Bootstrap(app).run()
-
-# @app.on_event("startup")
-# async def on_startup():
-#     await asyncio.run(Bootstrap(app).run_database_migrations())

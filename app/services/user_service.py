@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.log_config import configure_logger
 from app.dtos.activity_status import ActivityStatus
 from app.dtos.auth_dto import TokenData, LoginResponseDto
 from app.dtos.user_dto import UserResponseDto, RegisterUser, UpdateUserProfile
@@ -20,6 +21,7 @@ class UserService:
     def __init__(self, user_repo=Depends(UserRepository), subscription_repo=Depends(SubscriptionRepository),
                  role_repo=Depends(RoleRepository),
                  user_subscription_repo: UserSubscriptionRepository = Depends(UserSubscriptionRepository)):
+        self.logger = configure_logger(__name__)
         self.user_repo: UserRepository = user_repo
         self.subscription_repo: SubscriptionRepository = subscription_repo
         self.role_repo: RoleRepository = role_repo
@@ -111,22 +113,28 @@ class UserService:
 
     async def login(self, email: str, password: str) -> ActivityStatus[LoginResponseDto]:
         """Login user by email and password."""
-        user = await self.user_repo.get_user_by_email(email=email)
-        if user is None:
-            return ActivityStatus(code=404, message="No account found")
+        try:
+            self.logger.info("Attempting to login user with email: %s", email)
+            user = await self.user_repo.get_user_by_email(email=email)
+            if user is None:
+                return ActivityStatus(code=404, message="No account found")
 
-        if not user.is_active:
-            return ActivityStatus(code=403, message="Account is inactive")
+            if not user.is_active:
+                return ActivityStatus(code=403, message="Account is inactive")
 
-        if not JwtService.verify_password(password, db_password=user.password):
-            return ActivityStatus(code=401, message="Invalid credentials")
+            if not JwtService.verify_password(password, db_password=user.password):
+                return ActivityStatus(code=401, message="Invalid credentials")
 
-        token_data = TokenData(
-            email=str(user.email)
-        )
-        jwt_token = JwtService.generate_token(token_data.__dict__)
+            token_data = TokenData(
+                email=str(user.email)
+            )
+            jwt_token = JwtService.generate_token(token_data.__dict__)
 
-        return ActivityStatus(code=200, message="Login successful", data=LoginResponseDto.from_entity(user, jwt_token))
+            return ActivityStatus(code=200, message="Login successful",
+                                  data=LoginResponseDto.from_entity(user, jwt_token))
+        except Exception as e:
+            self.logger.error(f"Failed to login user: {e}", exc_info=True)
+            return ActivityStatus(code=500, message="Failed to login user", data=None)
 
     async def update_user_profile(self, email: str, user: UpdateUserProfile) -> ActivityStatus[UserResponseDto]:
         existing_user = await self.user_repo.get_user_by_email(email=email)
