@@ -55,8 +55,8 @@ class Settings(BaseSettings):
     EMAILS_FROM_EMAIL: EmailStr | None = None
     EMAILS_FROM_NAME: str | None = None
 
-    BACKEND_URL: HttpUrl
-    FRONTEND_URL: HttpUrl
+    BACKEND_URL: str
+    FRONTEND_URL: str
     GOOGLE_CLIENT_ID: str | None = None
     GOOGLE_CLIENT_SECRET: str | None = None
 

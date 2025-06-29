@@ -7,6 +7,7 @@ from app.services.user_service import UserService
 from app.core.config import settings
 from app.utils.constants.constants import AuthConstants
 
+
 security = HTTPBearer(auto_error=False)
 ALGORITHM = "HS256"
 
