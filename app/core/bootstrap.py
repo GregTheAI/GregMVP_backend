@@ -37,10 +37,7 @@ class Bootstrap:
 
         self.app.add_middleware(
             SessionMiddleware,
-            secret_key=settings.SESSION_SECRET_KEY,
-            same_site=settings.COOKIE_SAMESITE,
-            http_only=True
-        )
+            secret_key=settings.SESSION_SECRET_KEY)
 
         if settings.all_cors_origins:
             from starlette.middleware.cors import CORSMiddleware
