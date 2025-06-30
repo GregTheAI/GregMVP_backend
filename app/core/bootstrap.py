@@ -39,8 +39,7 @@ class Bootstrap:
             SessionMiddleware,
             secret_key=settings.SESSION_SECRET_KEY,
             same_site=settings.COOKIE_SAMESITE,
-            http_only=True,
-            domain=settings.COOKIE_DOMAIN,
+            http_only=True
         )
 
         if settings.all_cors_origins:
