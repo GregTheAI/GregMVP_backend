@@ -38,6 +38,7 @@ class AuthService:
         return self.oauth_clients[provider]
 
     async def create_oauth_client(self, request: Request, provider: str) -> ActivityStatus:
+        self.logger.info(f"received request -> {request} \n Session -> {request.session}", exc_info=True)
 
         self.logger.info(f"received request to initiate {provider} OAuth login")
         try:
@@ -57,6 +58,7 @@ class AuthService:
     async def get_oauth_user(self, request: Request, provider: str, db: AsyncSession) -> RedirectResponse:
         redirect_url = settings.FRONTEND_URL
         try:
+            self.logger.info(f"received request -> {request} \n Session -> {request.session}", exc_info=True)
             token = await self.get_oauth_client(provider).authorize_access_token(request)
             user: GoogleAuthUser = token["userinfo"]
 
