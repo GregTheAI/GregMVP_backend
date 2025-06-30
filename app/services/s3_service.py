@@ -5,10 +5,10 @@ import boto3
 from botocore.client import BaseClient
 from botocore.exceptions import ClientError
 
-from app.core.config import settings
+from app.core.config import get_settings
 from app.dtos.s3_response_dto import S3UploadResponse
 
-
+settings = get_settings()
 class S3Service:
     def __init__(self):
         self.s3_client: BaseClient = boto3.client(

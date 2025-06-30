@@ -7,7 +7,9 @@ from logging import Logger
 
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from app.core.config import settings
+from app.core.config import get_settings
+
+settings = get_settings()
 
 def configure_logging():
     # Disable uvicorn access logs
@@ -19,8 +21,6 @@ def configure_logging():
 
 def configure_logger(logger_name: str | None = None) -> Logger:
     import logging
-
-    configure_logging()
 
     logger = logging.getLogger(logger_name)
     logger.setLevel(logging.INFO)

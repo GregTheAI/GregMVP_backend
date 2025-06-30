@@ -2,12 +2,14 @@ import os
 import secrets
 import warnings
 from typing import Annotated, Any, Literal
+from functools import cache
 
 from pydantic import (
     AnyUrl,
     BeforeValidator,
     EmailStr,
     HttpUrl,
+    SecretStr,
     computed_field,
     model_validator,
 )
@@ -35,7 +37,7 @@ class Settings(BaseSettings):
     SESSION_SECRET_KEY: str
     COOKIE_HTTPONLY: bool = False
     COOKIE_SECURE: bool = False
-    COOKIE_SAMESITE: str | None
+    COOKIE_SAMESITE: str =  "none"
     COOKIE_DOMAIN: str | None = None
     # 60 minutes * 24 hours * 8 days = 8 days
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
@@ -94,7 +96,7 @@ class Settings(BaseSettings):
             self.FRONTEND_HOST
         ]
 
-    @computed_field  # type: ignore[prop-decorator]
+    @computed_field  
     @property
     def sqlalchemy_database_uri(self) -> str:
         uri = (
@@ -137,4 +139,8 @@ class Settings(BaseSettings):
         return self
 
 
-settings = Settings()
+
+@cache
+def get_settings() -> Settings:
+    
+    return Settings() # type: ignore[call-arg]

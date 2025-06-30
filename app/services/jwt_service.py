@@ -3,11 +3,14 @@ from datetime import timezone, datetime, timedelta
 from jose import jwt
 from passlib.context import CryptContext
 
-from app.core.config import settings
+from app.core.config import get_settings
+
+settings = get_settings()
 
 SECRET_KEY: str = settings.JWT_SECRET_KEY
 EXPIRY_TIME: int = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 ALGORITHM: str = "HS256"
+
 
 
 class JwtService:

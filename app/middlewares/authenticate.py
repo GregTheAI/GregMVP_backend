@@ -4,9 +4,11 @@ from jose import jwt, JWTError
 
 from app.dtos.user_dto import UserResponseDto
 from app.services.user_service import UserService
-from app.core.config import settings
+from app.core.config import get_settings
 from app.utils.constants.constants import AuthConstants
 
+
+settings = get_settings()
 
 security = HTTPBearer(auto_error=False)
 ALGORITHM = "HS256"

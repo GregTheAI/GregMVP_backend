@@ -5,10 +5,11 @@ from sqlalchemy import pool
 
 from alembic import context
 
-from app.core.config import settings
+from app.core.config import get_settings
 from app.entities import SQLModel
 from app.entities import User, UserRole, UserSubscription, Document, Subscription, Conversation
 
+settings = get_settings()
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config

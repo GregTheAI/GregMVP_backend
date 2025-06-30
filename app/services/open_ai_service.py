@@ -1,9 +1,10 @@
 from openai import AsyncOpenAI, AsyncStream
 from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam, ChatCompletionChunk
 
-from app.core.config import settings
+from app.core.config import get_settings
 
 
+settings = get_settings()
 class OpenAIService:
     def __init__(self):
         self.openai_client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
