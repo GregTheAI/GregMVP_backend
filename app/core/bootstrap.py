@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from starlette.requests import Request
+from starlette.middleware.sessions import SessionMiddleware
 
 from app.core.config import settings
 from app.core.log_config import LogExceptionsMiddleware, configure_logger
@@ -31,7 +32,6 @@ class Bootstrap:
             raise e
 
     def _register_middlewares(self):
-        from starlette.middleware.sessions import SessionMiddleware
 
         self.app.add_middleware(LogExceptionsMiddleware)
 

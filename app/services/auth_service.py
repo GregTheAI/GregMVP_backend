@@ -19,7 +19,7 @@ class AuthService:
     def __init__(self, user_service: UserService):
         self.logger = configure_logger(__name__)
         self.user_service: UserService = user_service
-        self.oauth = OAuth(settings)
+        self.oauth = OAuth()
 
         self.oauth.register(
             name='google',
@@ -30,7 +30,6 @@ class AuthService:
         )
 
         self.oauth_clients = {}
-
 
     def get_oauth_client(self, provider: str):
         if provider not in self.oauth_clients:
@@ -43,12 +42,12 @@ class AuthService:
         self.logger.info(f"received request to initiate {provider} OAuth login")
         try:
             redirect_url = f"{settings.BACKEND_URL}/api/v1/auth/callback/{provider}"
-            redirect_response = await self.get_oauth_client(provider).authorize_redirect(request,
-                                                                                         redirect_uri=redirect_url,
-                                                                                         prompt="consent")
 
+            redirect_response = await self.oauth.google.authorize_redirect(request, redirect_uri=redirect_url,
+                                                                           prompt="consent")
             url_response = redirect_response.headers["location"]
             status_code = redirect_response.status_code
+
             return ActivityStatus(code=status_code, message=f"Redirect to {provider} OAuth",
                                   data=OauthResponseDto.from_entity(url_response))
         except Exception as e:
@@ -59,7 +58,7 @@ class AuthService:
         redirect_url = settings.FRONTEND_URL
         try:
             self.logger.info(f"received request -> {request} \n Session -> {request.session}", exc_info=True)
-            token = await self.get_oauth_client(provider).authorize_access_token(request)
+            token = await self.oauth.google.authorize_access_token(request)
             user: GoogleAuthUser = token["userinfo"]
 
             if user is None:

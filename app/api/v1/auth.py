@@ -58,10 +58,9 @@ async def login(request: LoginRequestDto, user_service: UserService = Depends(ge
 
 
 @router.get("/login/{provider}")
-async def login_with_sso(request: Request, provider: str, auth_service: AuthService = Depends(get_auth_service)) -> JSONResponse:
-    response = await auth_service.create_oauth_client(request, provider)
-    return api_response(code=response.code, data=response.data, message=response.message)
+async def login_with_sso(request: Request, provider: str, auth_service: AuthService = Depends(get_auth_service)):
+    return await auth_service.create_oauth_client(request, provider)
 
-@router.get("/callback/{provider}")
+@router.get("/callback/{provider}", name="auth_callback")
 async def ss0_login_callback(request: Request, provider: str, auth_service: AuthService = Depends(get_auth_service),  db: AsyncSession = Depends(get_pg_database)):
     return await auth_service.get_oauth_user(request, provider, db)
