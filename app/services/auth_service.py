@@ -44,9 +44,7 @@ class AuthService:
             redirect_url = f"{settings.BACKEND_URL}/api/v1/auth/callback/{provider}"
             redirect_response = await self.get_oauth_client(provider).authorize_redirect(request,
                                                                                          redirect_uri=redirect_url,
-                                                                                         prompt="consent",
-                                                                                         state=settings.SESSION_SECRET_KEY
-                                                                                         )
+                                                                                         prompt="consent")
 
             url_response = redirect_response.headers["location"]
             status_code = redirect_response.status_code
@@ -91,8 +89,8 @@ class AuthService:
                 httponly=settings.COOKIE_HTTPONLY,
                 secure=settings.COOKIE_SECURE,
                 samesite=settings.COOKIE_SAMESITE,
-                max_age=3600,
-
+                domain=".gregthe.ai",
+                max_age=3600
             )
             self.logger.info(
                 f"OAuth user successfully retrieved and processed - redirecting to frontend {response.__dict__} headers {response.headers.__dict__}",

@@ -1,6 +1,3 @@
-import os
-from pathlib import Path
-
 from fastapi import FastAPI
 from starlette.requests import Request
 
@@ -40,7 +37,11 @@ class Bootstrap:
 
         self.app.add_middleware(
             SessionMiddleware,
-            secret_key=settings.SESSION_SECRET_KEY)
+            secret_key=settings.SESSION_SECRET_KEY,
+            same_site=settings.COOKIE_SAMESITE,
+            httponly=True,
+            domain=".gregthe.ai",
+        )
 
         if settings.all_cors_origins:
             from starlette.middleware.cors import CORSMiddleware
