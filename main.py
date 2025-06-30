@@ -1,10 +1,5 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI
 from fastapi.routing import APIRoute
-
-import asyncio
-
-from starlette.middleware.cors import CORSMiddleware
-from starlette.middleware.sessions import SessionMiddleware
 
 from app.api.v1 import api_router
 from app.core.bootstrap import Bootstrap
@@ -22,5 +17,7 @@ app = FastAPI(
     swagger_ui_init_oauth={},
     swagger_ui_oauth_scope=["persistAuthorization", True]
 )
+
+Bootstrap.run_database_migrations()
 
 Bootstrap(app).run()

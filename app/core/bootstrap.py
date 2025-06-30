@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 from fastapi import FastAPI
 from starlette.requests import Request
@@ -20,30 +21,16 @@ class Bootstrap:
         self._register_routes()
         self.logger.info("Application bootstrap process completed.")
 
-    def run_database_migrations(self):
-        self.logger.info("Running database migrations...")
+    @staticmethod
+    def run_database_migrations(alembic_file: str = "alembic.ini"):
         try:
             from alembic import command
             from alembic.config import Config
 
-            current_working_dir = os.getcwd()
-            self.logger.info(f"Current working directory: {current_working_dir}")
+            alembic_cfg = Config(alembic_file)
 
-            alembic_config_path = os.path.join(current_working_dir, "alembic.ini")
-
-            self.logger.info(f"Attempting to load Alembic config from: {alembic_config_path}")
-
-            if not os.path.exists(alembic_config_path):
-                self.logger.error(f"Alembic config file NOT FOUND at: {alembic_config_path}")
-                raise FileNotFoundError(f"alembic.ini not found at {alembic_config_path}")
-
-            alembic_cfg = Config(alembic_config_path)
-
-            self.logger.info("Attempting Alembic upgrade command...")
             command.upgrade(alembic_cfg, "head")
-            self.logger.info("Database migrations completed successfully.")
         except Exception as e:
-            self.logger.exception("Failed to run Alembic migrations")
             raise e
 
     def _register_middlewares(self):

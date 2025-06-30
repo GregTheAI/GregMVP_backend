@@ -9,9 +9,18 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.core.config import settings
 
+def configure_logging():
+    # Disable uvicorn access logs
+    logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
+    # Disable uvicorn error logs
+    logging.getLogger("uvicorn.error").setLevel(logging.WARNING)
+    # Disable alembic logs
+    logging.getLogger("alembic").setLevel(logging.WARNING)
 
 def configure_logger(logger_name: str | None = None) -> Logger:
     import logging
+
+    configure_logging()
 
     logger = logging.getLogger(logger_name)
     logger.setLevel(logging.INFO)
@@ -27,7 +36,9 @@ def configure_logger(logger_name: str | None = None) -> Logger:
     if not any(isinstance(h, logging.StreamHandler) for h in logger.handlers):
         console_handler = logging.StreamHandler()
         console_handler.setLevel(logging.INFO)
-        formatter = logging.Formatter(f"%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        formatter = logging.Formatter(
+            f"\033[1;32m%(asctime)s\033[0m - \033[1;34m%(name)s\033[0m - \033[1;33m%(levelname)s\033[0m - %(message)s"
+        )
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
 
