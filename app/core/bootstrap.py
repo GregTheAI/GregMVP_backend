@@ -40,7 +40,7 @@ class Bootstrap:
             secret_key=settings.SESSION_SECRET_KEY,
             same_site=settings.COOKIE_SAMESITE,
             httponly=True,
-            domain=".gregthe.ai",
+            domain=settings.COOKIE_DOMAIN,
         )
 
         if settings.all_cors_origins:

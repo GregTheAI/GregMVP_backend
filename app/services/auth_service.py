@@ -89,7 +89,7 @@ class AuthService:
                 httponly=settings.COOKIE_HTTPONLY,
                 secure=settings.COOKIE_SECURE,
                 samesite=settings.COOKIE_SAMESITE,
-                domain=".gregthe.ai",
+                domain=settings.COOKIE_DOMAIN,
                 max_age=3600
             )
             self.logger.info(
