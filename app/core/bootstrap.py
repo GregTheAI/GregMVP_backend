@@ -39,7 +39,7 @@ class Bootstrap:
             SessionMiddleware,
             secret_key=settings.SESSION_SECRET_KEY,
             same_site=settings.COOKIE_SAMESITE,
-            httponly=True,
+            http_only=True,
             domain=settings.COOKIE_DOMAIN,
         )
 
