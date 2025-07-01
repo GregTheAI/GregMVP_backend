@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
 from starlette.middleware.sessions import SessionMiddleware
+from starlette.middleware.cors import CORSMiddleware
 
 from app.core.config import get_settings
 from app.core.log_config import LogExceptionsMiddleware
@@ -22,7 +23,7 @@ app = FastAPI(
     swagger_ui_oauth_scope=["persistAuthorization", True]
 )
 
-app.add_middleware(LogExceptionsMiddleware)
+# app.add_middleware(LogExceptionsMiddleware)
 
 app.add_middleware(
     SessionMiddleware,
@@ -32,16 +33,22 @@ app.add_middleware(
     domain=".gregthe.ai",
 )
 
-if settings.all_cors_origins:
-    from starlette.middleware.cors import CORSMiddleware
-
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.all_cors_origins,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"]
-    )
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.all_cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
+# if settings.all_cors_origins:
+#
+#     app.add_middleware(
+#         CORSMiddleware,
+#         allow_origins=settings.all_cors_origins,
+#         allow_credentials=True,
+#         allow_methods=["*"],
+#         allow_headers=["*"]
+#     )
 
 from app.api.v1 import api_router
 
