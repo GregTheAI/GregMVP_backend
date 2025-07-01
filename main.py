@@ -26,7 +26,9 @@ app.add_middleware(LogExceptionsMiddleware)
 
 app.add_middleware(
     SessionMiddleware,
-    secret_key=settings.SESSION_SECRET_KEY
+    secret_key=settings.SESSION_SECRET_KEY,
+    same_site="none",
+    https_only=True
 )
 
 if settings.all_cors_origins:
