@@ -2,7 +2,7 @@ alembic==1.16.1
 annotated-types==0.7.0
 anyio==4.9.0
 argcomplete==1.10.3
-Authlib==1.6.0
+Authlib==0.15.3
 bcrypt==4.3.0
 beautifulsoup4==4.8.2
 boto3==1.38.38
