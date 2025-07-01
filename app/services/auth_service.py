@@ -58,7 +58,7 @@ class AuthService:
             self.logger.info(f"Session key for {provider}: {settings.SESSION_SECRET_KEY}")
             self.logger.info(f"Session registered for {provider}: {request.session}")
 
-            redirect_response = await self.oauth.google.authorize_redirect(request, redirect_uri=redirect_url, prompt="consent")
+            redirect_response = await self.oauth.google.authorize_redirect(request, redirect_uri=redirect_url, prompt="consent", state=oauth_state)
             url_response = redirect_response.headers["location"]
             status_code = redirect_response.status_code
             
