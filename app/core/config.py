@@ -39,6 +39,7 @@ class Settings(BaseSettings):
     COOKIE_SECURE: bool = False
     COOKIE_SAMESITE: str =  "none"
     COOKIE_DOMAIN: str | None = None
+    SESSION_COOKIE_NAME: str = "session"
     # 60 minutes * 24 hours * 8 days = 8 days
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     FRONTEND_HOST: str = "http://localhost:5173"
