@@ -4,6 +4,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from app.core.config import get_settings
 from app.core.log_config import LogExceptionsMiddleware
+from app.utils.constants.constants import AuthConstants
 from app.utils.helpers.api_helpers import api_ok_response
 
 settings = get_settings()
@@ -25,10 +26,7 @@ app.add_middleware(LogExceptionsMiddleware)
 
 app.add_middleware(
     SessionMiddleware,
-    secret_key=settings.SESSION_SECRET_KEY,
-    max_age=86400,  # one day
-    same_site="none",  # or strict/none depending on frontend
-    session_cookie=settings.SESSION_COOKIE_NAME,
+    secret_key=settings.SESSION_SECRET_KEY
 )
 
 if settings.all_cors_origins:

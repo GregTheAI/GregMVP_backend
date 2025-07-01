@@ -1,4 +1,6 @@
 import secrets
+
+from authlib.integrations.base_client import OAuthError
 from authlib.integrations.starlette_client import OAuth
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.requests import Request
@@ -34,7 +36,6 @@ class AuthService:
             client_kwargs={'scope': 'openid email profile'}
         )
         
-        
 
         self.oauth_clients = {}
 
@@ -58,7 +59,7 @@ class AuthService:
             self.logger.info(f"Session registered for {provider}: {request.session}")
 
             redirect_response = await self.oauth.google.authorize_redirect(request, redirect_uri=redirect_url,
-                                                                           prompt="consent", state = oauth_state)
+                                                                           prompt="consent")
             url_response = redirect_response.headers["location"]
             status_code = redirect_response.status_code
             
@@ -146,15 +147,15 @@ class AuthService:
             
             self.logger.info(f"Received state: {received_state}, Session state: {session_state}")
             
-            if not received_state or not session_state:
-                self.logger.error("Missing OAuth state parameter - possible CSRF attack or session issue")
-                return RedirectResponse(f"{redirect_url}?error=missing_state")
-                
-            if received_state != session_state:
-                self.logger.error(f"State mismatch - received: {received_state}, expected: {session_state}")
-                return RedirectResponse(f"{redirect_url}?error=state_mismatch")
-            
-            self.logger.info("OAuth state validation successful")
+            # if not received_state or not session_state:
+            #     self.logger.error("Missing OAuth state parameter - possible CSRF attack or session issue")
+            #     return RedirectResponse(f"{redirect_url}?error=missing_state")
+            #
+            # if received_state != session_state:
+            #     self.logger.error(f"State mismatch - received: {received_state}, expected: {session_state}")
+            #     return RedirectResponse(f"{redirect_url}?error=state_mismatch")
+
+            # self.logger.info("OAuth state validation successful")
             
             # Exchange authorization code for access token
             token = await self.oauth.google.authorize_access_token(request)
@@ -221,23 +222,20 @@ class AuthService:
             response.set_cookie(
                 key=AuthConstants.ACCESS_TOKEN_COOKIE_KEY,
                 value=jwt_token,
-                httponly=True,      # Prevents XSS attacks
-                secure=True,        # Required for HTTPS and SameSite=None
+                httponly=settings.COOKIE_HTTPONLY,      # Prevents XSS attacks
+                secure=settings.COOKIE_SECURE,        # Required for HTTPS and SameSite=None
                 samesite="none",    # Allows cross-site requests
-                domain=None,
-                max_age=3600,       # 1 hour expiration
-                path="/"            # Cookie available across entire domain
             )
             
             # Clean up OAuth state from session
-            request.session.pop('oauth_state', None)
+            # request.session.pop('oauth_state', None)
             
             self.logger.info(f"OAuth authentication successful for {user_email}")
             self.logger.info(f"Cookie settings - Domain: {settings.COOKIE_DOMAIN}, Secure: True, SameSite: none")
             self.logger.info(f"Redirecting to: {redirect_url}")
             
             return response
-            
+
         except Exception as e:
             self.logger.error(f"OAuth callback error: {str(e)}", exc_info=True)
             
@@ -251,11 +249,3 @@ class AuthService:
                 error_message = "user_error"
                 
             return RedirectResponse(f"{redirect_url}?error={error_message}")
-            
-        finally:
-            # Ensure session cleanup in case of any errors
-            try:
-                if 'oauth_state' in request.session:
-                    request.session.pop('oauth_state', None)
-            except Exception:
-                pass  # Ignore cleanup errors
