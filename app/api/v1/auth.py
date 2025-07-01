@@ -88,6 +88,7 @@ async def ss0_login_callback(request: Request):
     print(user_info)
 
     response = RedirectResponse(settings.FRONTEND_URL)
+
     response.set_cookie(
         key=AuthConstants.ACCESS_TOKEN_COOKIE_KEY,
         value="jwt_token",
@@ -95,6 +96,8 @@ async def ss0_login_callback(request: Request):
         secure=settings.COOKIE_SECURE,  # Required for HTTPS and SameSite=None
         samesite="none",  # Allows cross-site requests
     )
+
+    print(response)
     return response
 
 
