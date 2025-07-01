@@ -27,7 +27,7 @@ app.add_middleware(
     SessionMiddleware,
     secret_key=settings.SESSION_SECRET_KEY,
     max_age=86400,  # one day
-    same_site="lax",  # or strict/none depending on frontend
+    same_site="none",  # or strict/none depending on frontend
     session_cookie=settings.SESSION_COOKIE_NAME,
 )
 
