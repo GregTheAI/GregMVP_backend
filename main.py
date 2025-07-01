@@ -27,10 +27,7 @@ app = FastAPI(
 
 app.add_middleware(
     SessionMiddleware,
-    secret_key=settings.SESSION_SECRET_KEY,
-    same_site="none",
-    https_only=True,
-    domain=".gregthe.ai",
+    secret_key=settings.SESSION_SECRET_KEY
 )
 
 app.add_middleware(
