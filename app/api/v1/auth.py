@@ -9,10 +9,11 @@ from starlette.responses import JSONResponse, RedirectResponse
 
 from app.core.config import get_settings
 from app.core.storage.dependencies import get_pg_database
-from app.dtos.auth_dto import LoginRequestDto
-from app.dtos.user_dto import RegisterUserDto, RegisterUser
+from app.dtos.auth_dto import LoginRequestDto, TokenData
+from app.dtos.user_dto import RegisterUserDto, RegisterUser, UpdateUserProfile
 from app.services import AuthService, UserService
 from app.services.dependencies import get_user_service, get_auth_service
+from app.services.jwt_service import JwtService
 from app.utils.constants.constants import AuthConstants
 from app.utils.helpers.api_helpers import api_bad_response, api_created_response, api_response
 
@@ -76,8 +77,8 @@ async def login_with_sso(request: Request, provider: str):
     redirect_url = f"{settings.BACKEND_URL}/api/v1/auth/callback/{provider}"
     return await oauth.google.authorize_redirect(request, redirect_uri=redirect_url, prompt="consent")
 
-@router.get("/callback/{provider}", name="auth_callback")
-async def ss0_login_callback(request: Request):
+@router.get("/callback/{provider}")
+async def ss0_login_callback(request: Request, provider: str, user_service: UserService = Depends(get_user_service), db: AsyncSession = Depends(get_pg_database)) -> RedirectResponse:
     try:
         user_response: OAuth2Token = await oauth.google.authorize_access_token(request)
     except Exception as e:
@@ -85,13 +86,41 @@ async def ss0_login_callback(request: Request):
 
     user_info = user_response.get("userinfo")
 
+    user_email = str(user_info.email).strip().lower()
+
+    user_exists = await user_service.user_exists_by_email(email=user_email)
+
+    if user_exists:
+        # Update existing user profile
+        payload = UpdateUserProfile(
+            profile_picture=getattr(user_info, 'picture', None),
+            first_name=getattr(user_info, 'given_name', None),
+            last_name=getattr(user_info, 'family_name', None)
+        )
+        await user_service.update_user_profile(user_email, payload)
+    else:
+        # Create new user
+        payload = RegisterUser(
+            email=user_info.email,
+            provider=provider,
+            profile_picture=getattr(user_info, 'picture', None),
+            firstName=getattr(user_info, 'given_name', None),
+            lastName=getattr(user_info, 'family_name', None)
+        )
+        await user_service.create_user(payload, db)
+
     print(user_info)
 
+    token_data = TokenData(email=user_email)
+    jwt_token = JwtService.generate_token(token_data.__dict__)
+
+    if not jwt_token:
+        return RedirectResponse(f"{settings.FRONTEND_URL}?error=token_generation_failed")
     response = RedirectResponse(settings.FRONTEND_URL)
 
     response.set_cookie(
         key=AuthConstants.ACCESS_TOKEN_COOKIE_KEY,
-        value="jwt_token",
+        value=jwt_token,
         httponly=settings.COOKIE_HTTPONLY,  # Prevents XSS attacks
         secure=settings.COOKIE_SECURE,  # Required for HTTPS and SameSite=None
         samesite="none",  # Allows cross-site requests
