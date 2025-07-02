@@ -45,12 +45,12 @@ async def auth_user(token: str, user_service: UserService) -> UserResponseDto:
     try:
         email = await get_email_from_token(token)
         if not email:
-            raise HTTPException(status_code=400, detail="Token payload missing email")
+            raise HTTPException(status_code=403, detail="Token payload missing email")
     except JWTError as e:
         raise HTTPException(status_code=401, detail=f"Invalid or expired token {e}")
 
     user = await user_service.get_user_by_email(email)
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=403, detail="Unauthorized")
 
     return user
