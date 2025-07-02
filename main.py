@@ -1,12 +1,8 @@
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
-from starlette.middleware.sessions import SessionMiddleware
-from starlette.middleware.cors import CORSMiddleware
 
+from app.core.bootstrap import Bootstrap
 from app.core.config import get_settings
-from app.core.log_config import LogExceptionsMiddleware
-from app.utils.constants.constants import AuthConstants
-from app.utils.helpers.api_helpers import api_ok_response
 
 settings = get_settings()
 
@@ -23,44 +19,6 @@ app = FastAPI(
     swagger_ui_oauth_scope=["persistAuthorization", True]
 )
 
-# app.add_middleware(LogExceptionsMiddleware)
-
-app.add_middleware(
-    SessionMiddleware,
-    secret_key=settings.SESSION_SECRET_KEY
-)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.all_cors_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"]
-)
-# if settings.all_cors_origins:
-#
-#     app.add_middleware(
-#         CORSMiddleware,
-#         allow_origins=settings.all_cors_origins,
-#         allow_credentials=True,
-#         allow_methods=["*"],
-#         allow_headers=["*"]
-#     )
-
-from app.api.v1 import api_router
-
-
-@app.get("/", tags=["Health"])
-async def root():
-    return api_ok_response(message=f"Welcome to the {settings.PROJECT_NAME}API!")
-
-
-@app.get("/health", tags=["Health"])
-async def health():
-    return "healthy"
-
-
-app.include_router(api_router, prefix=settings.API_V1_STR)
 # Bootstrap.run_database_migrations()
 
-# Bootstrap(app).run()
+Bootstrap(app).run()

@@ -7,7 +7,7 @@ from alembic import context
 
 from app.core.config import get_settings
 from app.entities import SQLModel
-from app.entities import User, UserRole, UserSubscription, Document, Subscription, Conversation
+from app.entities import User, UserRole, UserSubscription, WaitList, Subscription, Conversation, Document
 
 settings = get_settings()
 # this is the Alembic Config object, which provides

@@ -89,7 +89,7 @@ class UserService:
             token_data = TokenData(email= str(created_user.email))
             jwt_token = JwtService.generate_token(token_data.__dict__)
 
-            return ActivityStatus(code=200, message="User created successfully",
+            return ActivityStatus(code=201, message="User created successfully",
                                   data=UserResponseDto(id=str(created_user.id), firstName=created_user.first_name,
                                                        lastName=created_user.last_name, email=str(created_user.email),
                                                        profilePicture=created_user.profile_picture,
