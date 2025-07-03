@@ -83,7 +83,7 @@ async def ss0_login_callback(request: Request, provider: str, user_service: User
     try:
         user_response: OAuth2Token = await oauth.google.authorize_access_token(request)
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Could not validate credentials {e}")
+        return RedirectResponse(f"{settings.FRONTEND_URL}?error=unauthorized")
 
     user_info = user_response.get("userinfo")
 
