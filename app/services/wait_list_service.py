@@ -18,7 +18,7 @@ class WaitListService:
         self.email_service: EmailService = email_service
         self.db = get_pg_database()
 
-    async def send_wait_list_confirmation_email(self, email: str, background_task: BackgroundTasks) -> None:
+    async def send_wait_list_confirmation_email(self, email: str) -> None:
         """Send a confirmation email to the user."""
         try:
             self.logger.info(f"Sending email to {email}")
@@ -26,13 +26,13 @@ class WaitListService:
             email = email.strip()
             name = email.split('@')[0].capitalize()
             html_content = send_wait_list_html_email(name)
-            self.email_service.send_email_background(background_task, to_email=email,
+            self.email_service.send_email_background(to_email=email,
                                                            subject="Registration Confirmation",
                                                            html_content=html_content)
         except Exception as e:
             self.logger.error(f"Failed to send confirmation email to {email}: {e}")
 
-    async def create_interest(self, request: RegisterInterestDto, background_task: BackgroundTasks) -> ActivityStatus:
+    async def create_interest(self, request: RegisterInterestDto) -> ActivityStatus:
         try:
             email_str = str(request.email)
             existing_interest = await self.wait_list_repo.user_has_already_registered(email=email_str)
@@ -45,7 +45,7 @@ class WaitListService:
                 return ActivityStatus(code=424, message="Failed to register interest")
 
             # Send confirmation email
-            await self.send_wait_list_confirmation_email(email_str, background_task)
+            await self.send_wait_list_confirmation_email(email_str)
 
             return ActivityStatus(code=201, message="Interest registered successfully",
                                   data=RegisterInterestResponse(email=email_str))

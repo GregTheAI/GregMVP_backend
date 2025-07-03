@@ -44,9 +44,11 @@ class JwtService:
         return CryptContext(schemes=["bcrypt"], deprecated="auto")
 
     @staticmethod
-    def generate_token(data: dict) -> str:
+    def generate_token(data: dict, expiry_time: float = EXPIRY_TIME) -> str:
         to_encode = data.copy()
-        expire = datetime.now(timezone.utc) + timedelta(minutes=EXPIRY_TIME)
+        if expiry_time is None:
+            expiry_time = EXPIRY_TIME
+        expire = datetime.now(timezone.utc) + timedelta(minutes=expiry_time)
         to_encode.update({"exp": expire})
         return JwtService.encode(to_encode)
 

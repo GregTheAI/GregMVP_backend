@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import ClassVar
 
 from pydantic import EmailStr
+from sqlalchemy import Nullable
 from sqlalchemy.orm import relationship
 from sqlmodel import Field, Relationship, SQLModel
 
@@ -24,6 +25,8 @@ class User(AuditTrail, SQLModel, table=True):
     is_active: bool = True
     is_superuser: bool = False
     is_email_verified: bool = False
+    reset_password_email_token: str | None = Field(default=None, index=True)
+    resetPasswordExpirationTime: datetime | None = Field(default=None)
     last_login: datetime = Field(default_factory=datetime.utcnow)
 
     user_subscriptions: ClassVar = relationship("UserSubscription", back_populates="user")

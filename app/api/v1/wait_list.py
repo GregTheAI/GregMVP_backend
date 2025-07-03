@@ -11,7 +11,7 @@ router = APIRouter(tags=["wait list"])
 
 
 @router.post("/register")
-async def register_interest(payload: RegisterInterestDto, backgroundTask: BackgroundTasks,
+async def register_interest(payload: RegisterInterestDto, background_task: BackgroundTasks,
                             wait_list_service: WaitListService = Depends(get_wait_list_service)) -> JSONResponse:
-    response = await wait_list_service.create_interest(payload, backgroundTask)
+    response = await wait_list_service.create_interest(payload, background_task)
     return api_response(code=response.code, data=response.data, message=response.message)

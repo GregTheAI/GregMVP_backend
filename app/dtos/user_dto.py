@@ -42,3 +42,7 @@ class UpdateUserProfile(BaseModel):
     profile_picture: str | None = None
     first_name: str | None = Field(max_length=255)
     last_name: str | None = Field(max_length=255)
+
+
+class VerifyEmailDto(BaseModel):
+    email: str = Field(max_length=255)

@@ -1,31 +1,42 @@
 from datetime import datetime, timedelta
 
-from fastapi import Depends
+from fastapi import Depends, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import get_settings
 from app.core.log_config import configure_logger
 from app.dtos.activity_status import ActivityStatus
 from app.dtos.auth_dto import TokenData, LoginResponseDto
-from app.dtos.user_dto import UserResponseDto, RegisterUser, UpdateUserProfile
+from app.dtos.user_dto import UserResponseDto, RegisterUser, UpdateUserProfile, VerifyEmailDto
 from app.entities import User, UserSubscription
 from app.repositories.role_repository import RoleRepository
 from app.repositories.subscription_repository import SubscriptionRepository
 from app.repositories.user_repository import UserRepository
 from app.repositories.user_subscription_repository import UserSubscriptionRepository
+from app.services.email_service import EmailService
 from app.services.jwt_service import JwtService
+from app.utils.helpers.email.wait_list import send_email_confirmation_html
 
+settings = get_settings()
 
 class UserService:
     """Service for user-related operations."""
 
     def __init__(self, user_repo=Depends(UserRepository), subscription_repo=Depends(SubscriptionRepository),
                  role_repo=Depends(RoleRepository),
-                 user_subscription_repo: UserSubscriptionRepository = Depends(UserSubscriptionRepository)):
+                 user_subscription_repo: UserSubscriptionRepository = Depends(UserSubscriptionRepository), email_service=Depends(EmailService)):
         self.logger = configure_logger(__name__)
         self.user_repo: UserRepository = user_repo
         self.subscription_repo: SubscriptionRepository = subscription_repo
         self.role_repo: RoleRepository = role_repo
         self.user_subscription_repo: UserSubscriptionRepository = user_subscription_repo
+        self.email_service : EmailService = email_service
+
+    @staticmethod
+    async def _generate_token(email, expiration_minutes: float | None = None) -> str:
+        token_data = TokenData(email=str(email))
+        jwt_token = JwtService.generate_token(token_data.__dict__, expiration_minutes)
+        return jwt_token
 
     async def create_user(self, user: RegisterUser, db: AsyncSession) -> ActivityStatus:
         """Create a new user in the database."""
@@ -86,15 +97,18 @@ class UserService:
                 await db.rollback()
                 return ActivityStatus(code=424, message="Failed to setup user subscription")
 
-            token_data = TokenData(email= str(created_user.email))
-            jwt_token = JwtService.generate_token(token_data.__dict__)
+            jwt_token = await self._generate_token(created_user.email)
 
-            return ActivityStatus(code=201, message="User created successfully",
-                                  data=UserResponseDto(id=str(created_user.id), firstName=created_user.first_name,
+            user_data= UserResponseDto(id=str(created_user.id), firstName=created_user.first_name,
                                                        lastName=created_user.last_name, email=str(created_user.email),
                                                        profilePicture=created_user.profile_picture,
                                                        isEmailVerified=created_user.is_email_verified,
-                                                       username=created_user.username, token=jwt_token))
+                                                       username=created_user.username, token=jwt_token)
+
+            await self.send_user_email_verification_email(user_data)
+
+            return ActivityStatus(code=201, message="User created successfully",
+                                  data=user_data)
         except Exception as e:
             await db.rollback()
             return ActivityStatus(code=500, message="Failed to create user")
@@ -108,8 +122,10 @@ class UserService:
                                lastName=user.last_name, profilePicture=user.profile_picture,
                                isEmailVerified=user.is_email_verified, username=user.username)
 
+
     async def user_exists_by_email(self, email: str) -> bool:
         return await self.user_repo.user_exists_by_email(email=email)
+
 
     async def login(self, email: str, password: str) -> ActivityStatus[LoginResponseDto]:
         """Login user by email and password."""
@@ -125,10 +141,7 @@ class UserService:
             if not JwtService.verify_password(password, db_password=user.password):
                 return ActivityStatus(code=401, message="Invalid credentials")
 
-            token_data = TokenData(
-                email=str(user.email)
-            )
-            jwt_token = JwtService.generate_token(token_data.__dict__)
+            jwt_token = await self._generate_token(email)
 
             return ActivityStatus(code=200, message="Login successful",
                                   data=LoginResponseDto.from_entity(user, jwt_token))
@@ -152,3 +165,44 @@ class UserService:
                                                        profilePicture=updated_user.profile_picture,
                                                        isEmailVerified=updated_user.is_email_verified,
                                                        username=updated_user.username))
+
+    async def send_user_email_verification_email(self, user: UserResponseDto) -> ActivityStatus[VerifyEmailDto]:
+
+        """Send email verification to the user."""
+        email = user.email
+        name = user.first_name
+        jwt_token = await self._generate_token(email, 5)
+
+        email = email.strip()
+        verification_url = f"{settings.FRONTEND_EMAIL_VERFICATION_URL}?token={jwt_token}"
+
+        html_content = send_email_confirmation_html(name, verification_url)
+        self.email_service.send_email_background(to_email=email,
+                                                 subject="Email verification",
+                                                 html_content=html_content)
+
+        return ActivityStatus(code=200, message="Email sent successfully",
+                              data=VerifyEmailDto(email=email))
+
+
+    async def update_user_email_verification_status(self, email: str) -> ActivityStatus[UserResponseDto]:
+        """Update the email verification status of a user."""
+        self.logger.info("Attempting to update user email verification status for email: %s", email)
+
+        existing_user = await self.user_repo.get_user_by_email(email=email)
+
+        if existing_user is None:
+            return ActivityStatus(code=404, message="User not found")
+
+        if existing_user.is_email_verified:
+            return ActivityStatus(code=400, message="Email is already verified")
+
+        existing_user.is_email_verified = True
+
+        updated_user = await self.user_repo.update_user_profile(existing_user)
+        return ActivityStatus(code=200, message="Email verified successfully",
+                              data=UserResponseDto(id=str(updated_user.id), firstName=updated_user.first_name,
+                                                   lastName=updated_user.last_name, email=str(updated_user.email),
+                                                   profilePicture=updated_user.profile_picture,
+                                                   isEmailVerified=updated_user.is_email_verified,
+                                                   username=updated_user.username))

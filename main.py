@@ -19,6 +19,6 @@ app = FastAPI(
     swagger_ui_oauth_scope=["persistAuthorization", True]
 )
 
-# Bootstrap.run_database_migrations()
+Bootstrap.run_database_migrations()
 
 Bootstrap(app).run()

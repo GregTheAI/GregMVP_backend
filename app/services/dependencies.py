@@ -1,4 +1,4 @@
-from fastapi import Depends
+from fastapi import Depends, BackgroundTasks
 
 from app.repositories.conversation_repository import ConversationRepository
 from app.repositories.role_repository import RoleRepository
@@ -19,9 +19,9 @@ def get_user_service(
         user_repo: UserRepository = Depends(),
         subscription_repo: SubscriptionRepository = Depends(),
         role_repo: RoleRepository = Depends(),
-        user_sub_repo: UserSubscriptionRepository = Depends(),
+        user_sub_repo: UserSubscriptionRepository = Depends(), email_service: EmailService = Depends()
 ) -> UserService:
-    return UserService(user_repo, subscription_repo, role_repo, user_sub_repo)
+    return UserService(user_repo, subscription_repo, role_repo, user_sub_repo, email_service)
 
 
 def get_auth_service(user_service: UserService = Depends(get_user_service)) -> AuthService:
@@ -30,8 +30,8 @@ def get_auth_service(user_service: UserService = Depends(get_user_service)) -> A
 def get_s3_service() -> S3Service:
     return S3Service()
 
-def get_email_service() -> EmailService:
-    return EmailService()
+def get_email_service(background_tasks: BackgroundTasks = Depends()) -> EmailService:
+    return EmailService(background_tasks)
 
 def get_extractor_service() -> ExtractorService:
     return ExtractorService()

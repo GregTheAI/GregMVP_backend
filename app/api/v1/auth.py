@@ -1,7 +1,6 @@
-from authlib.integrations.base_client import OAuthError
 from authlib.integrations.starlette_client import OAuth
 from authlib.oauth2.rfc6749 import OAuth2Token
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, Request, HTTPException, BackgroundTasks
 from fastapi.params import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
@@ -9,10 +8,12 @@ from starlette.responses import JSONResponse, RedirectResponse
 
 from app.core.config import get_settings
 from app.core.storage.dependencies import get_pg_database
+from app.dtos.api_response import ApiResponse
 from app.dtos.auth_dto import LoginRequestDto, TokenData
-from app.dtos.user_dto import RegisterUserDto, RegisterUser, UpdateUserProfile
-from app.services import AuthService, UserService
-from app.services.dependencies import get_user_service, get_auth_service
+from app.dtos.user_dto import RegisterUserDto, RegisterUser, UpdateUserProfile, UserResponseDto, VerifyEmailDto
+from app.middlewares.authenticate import get_current_user
+from app.services import UserService
+from app.services.dependencies import get_user_service
 from app.services.jwt_service import JwtService
 from app.utils.constants.constants import AuthConstants
 from app.utils.helpers.api_helpers import api_bad_response, api_created_response, api_response
@@ -35,7 +36,7 @@ async def register(request: RegisterUserDto, user_service: UserService = Depends
 
     create_user_response = await user_service.create_user(RegisterUser(firstName=request.first_name, lastName=request.last_name, password=request.password, email=request.email, provider="direct"), db)
     if create_user_response.isSuccess is False:
-        return api_bad_response(create_user_response.message)
+        return api_response(code=create_user_response.code, message=create_user_response.message, data=create_user_response.data)
 
     token = create_user_response.data.token
 
@@ -109,8 +110,6 @@ async def ss0_login_callback(request: Request, provider: str, user_service: User
         )
         await user_service.create_user(payload, db)
 
-    print(user_info)
-
     token_data = TokenData(email=user_email)
     jwt_token = JwtService.generate_token(token_data.__dict__)
 
@@ -126,7 +125,6 @@ async def ss0_login_callback(request: Request, provider: str, user_service: User
         samesite="none",  # Allows cross-site requests
     )
 
-    print(response)
     return response
 
 
@@ -137,3 +135,26 @@ async def ss0_login_callback(request: Request, provider: str, user_service: User
 # @router.get("/callback/{provider}", name="auth_callback")
 # async def ss0_login_callback(request: Request, provider: str, auth_service: AuthService = Depends(get_auth_service),  db: AsyncSession = Depends(get_pg_database)):
 #     return await auth_service.get_oauth_user(request, provider, db)
+
+@router.post("/verify-email", response_model=ApiResponse[VerifyEmailDto])
+async def manual_verify_email(user: UserResponseDto = Depends(get_current_user), user_service: UserService = Depends(get_user_service)) -> JSONResponse:
+
+    if user.is_email_verified:
+        return api_bad_response(message="Email is already verified")
+
+    response = await user_service.send_user_email_verification_email(user)
+
+    if response.isSuccess is False or response.data is None:
+        return api_bad_response(response.message)
+
+    api_resp = api_response(code=response.code, data=response.data, message=response.message)
+    return api_resp
+
+
+@router.get("/verify-email", response_model=ApiResponse[UserResponseDto])
+async def verify_email(user: UserResponseDto = Depends(get_current_user), user_service: UserService = Depends(get_user_service)) -> JSONResponse:
+
+    response = await user_service.update_user_email_verification_status(user.email)
+
+    api_resp = api_response(code=response.code, data=response.data, message=response.message)
+    return api_resp
