@@ -31,3 +31,13 @@ class OpenAIService:
             ChatCompletionSystemMessageParam(role="system", content="Extract summary, key actions, and KPIs."),
             ChatCompletionUserMessageParam(role="user", content=text)
             ], stream=True)
+
+    async def chat(self, text: str) -> AsyncStream[ChatCompletionChunk]:
+        return await self.openai_client.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                ChatCompletionSystemMessageParam(role="system", content="You are a helpful assistant. Respond to the user's message naturally."),
+                ChatCompletionUserMessageParam(role="user", content=text)
+            ],
+            stream=True
+        )

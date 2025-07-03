@@ -21,8 +21,12 @@ class WaitListService:
     async def send_wait_list_confirmation_email(self, email: str, background_task: BackgroundTasks) -> None:
         """Send a confirmation email to the user."""
         try:
-            html_content = send_wait_list_html_email(name=email)
-            await self.email_service.send_email_background(background_task, to_email=email,
+            self.logger.info(f"Sending email to {email}")
+
+            email = email.strip()
+            name = email.split('@')[0].capitalize()
+            html_content = send_wait_list_html_email(name)
+            self.email_service.send_email_background(background_task, to_email=email,
                                                            subject="Registration Confirmation",
                                                            html_content=html_content)
         except Exception as e:

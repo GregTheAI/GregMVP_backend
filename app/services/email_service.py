@@ -29,17 +29,14 @@ class EmailService:
             message.add_alternative(html_body, subtype="html")
 
             await smtp.connect()
-            # await smtp.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
-            await smtp.login("ses-smtp-user.20250703-111313", "BFkvgWwvPT83A2nHTjm1Lunf9sSgv9CM2TdSieXLmukk")
+            await smtp.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
+            # await smtp.login("ses-smtp-user.20250703-111313", "BFkvgWwvPT83A2nHTjm1Lunf9sSgv9CM2TdSieXLmukk")
             smtp_response = await smtp.send_message(message)
             return smtp_response
 
-        except ClientError as e:
-            print(f"Failed to send email: {e.response['Error']['Message']}")
-            return await smtp.quit()
         except Exception as e:
             print(f"Failed to send email: {e}")
-            return await smtp.quit()
+            return None
 
     def send_email_background(self, background_tasks: BackgroundTasks, to_email: str, subject: str, html_content: str):
         background_tasks.add_task(self._send_email_sync, to_email, subject, html_content)

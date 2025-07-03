@@ -32,7 +32,7 @@ class ConversationService:
 
         # Here you would implement the logic to generate a response based on the user message
         # For now, we will just return a placeholder response
-        response_content = await self.openai_service.extract_info_from_text("")
+        response_content = await self.openai_service.chat(user_conversation.content)
 
         # Store the assistant's response in the conversation
         assistant_conversation = Conversation(content=response_content, session_id=session_id, role="assistant")
