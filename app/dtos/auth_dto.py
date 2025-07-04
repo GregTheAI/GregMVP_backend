@@ -47,3 +47,11 @@ class LoginResponseDto:
                    username=data.username,
                    token=token)
 
+
+class ForgotPasswordDto(BaseModel):
+    email : EmailStr
+
+class ResetPasswordDto(BaseModel):
+    email : EmailStr
+    password : str
+    token : str

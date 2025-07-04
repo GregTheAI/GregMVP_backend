@@ -60,7 +60,8 @@ class Settings(BaseSettings):
 
     BACKEND_URL: str
     FRONTEND_URL: str
-    FRONTEND_EMAIL_VERFICATION_URL: str
+    FRONTEND_EMAIL_VERIFICATION_URL: str
+    FRONTEND_FORGOT_PASSWORD_URL: str
     GOOGLE_CLIENT_ID: str | None = None
     GOOGLE_CLIENT_SECRET: str | None = None
 

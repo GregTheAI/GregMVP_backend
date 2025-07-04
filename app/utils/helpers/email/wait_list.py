@@ -606,3 +606,126 @@ def send_email_confirmation_html(first_name: str, verification_url: str) -> str:
     </body>
   </html>
 """
+
+
+def forgot_password_html(first_name: str, verification_url: str, otp: str) -> str:
+    """
+    Generates the HTML content for the email verification.
+
+    Args:
+        first_name (str): The recipient name.
+        verification_url (str): The email verification url.
+        otp (str): The one-time password for verification.
+
+    Returns:
+        str: The HTML content for the email verification.
+    """
+    return f"""<!DOCTYPE html>
+  <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+      <link
+        href="https://fonts.googleapis.com/css2?family=Inter&display=swap"
+        rel="stylesheet"
+      />
+      <title>Document</title>
+    </head>
+    <body style="margin: 0px; overflow-x: hidden">
+      <div
+        style="
+          background: url('https://res.cloudinary.com/daviluiz/image/upload/v1636639035/Pattern_Blue_Yellow.png');
+          height: 311px;
+          width: 100%;
+          display: block;
+        "
+      >
+        <center>
+          <div>
+            <center style="padding-top: 78px">
+              <img
+                src="https://res.cloudinary.com/daviluiz/image/upload/v1636639053/Logo.png"
+                alt="logo"
+              />
+            </center>
+            <h4
+              style="
+                font-size: 1.5em;
+                color: #fff;
+                font-family: 'Inter', sans-serif;
+                margin-top: 50px;
+              "
+            >
+              Hi,<span
+                style="margin-left: 0.5rem; text-transform: capitalize"
+              >{first_name}</span>
+            </h4>
+          </div>
+        </center>
+      </div>
+
+      <hr
+        style="
+          width: 50%;
+          border: 0.5px solid rgb(214, 211, 211);
+          margin-top: 2rem;
+          margin-bottom: 2rem;
+        "
+      />
+      <center>
+        <p
+          style="
+            text-align: center;
+            line-height: 40px;
+            color: #515759;
+            font-family: 'Inter', sans-serif;
+          "
+        >
+        You are receiving this email because you (or someone else) recently requested to reset your password.
+        <br />
+        Please disregard this email if you did not initiate this action.
+        </p>
+      </center>
+      <center>
+        <button
+          style="
+            width: 240px;
+            height: 56px;
+            background: #1890ff;
+            border-radius: 8px;
+            margin-top: 21px;
+            border: none;
+            color: #fff;
+            font-size: 18px;
+            font-weight: bold;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+          "
+        >
+        <p style="color: #fff; text-decoration: none; font-size: 18px; font-weight: bold; font-family: 'Inter', sans-serif;">
+          Your OTP is: {otp}</p>
+        </button>
+        <button
+          style="
+            width: 240px;
+            height: 56px;
+            background: #1890ff;
+            border-radius: 8px;
+            margin-top: 21px;
+            border: none;
+            color: #fff;
+            font-size: 18px;
+            font-weight: bold;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+          "
+        >
+        <a style="color: #fff; text-decoration: none;" href="{verification_url}" target="_blank">Reset Password</a>
+        </button>
+      </center>
+    </body>
+  </html>
+"""

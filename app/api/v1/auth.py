@@ -9,7 +9,7 @@ from starlette.responses import JSONResponse, RedirectResponse
 from app.core.config import get_settings
 from app.core.storage.dependencies import get_pg_database
 from app.dtos.api_response import ApiResponse
-from app.dtos.auth_dto import LoginRequestDto, TokenData
+from app.dtos.auth_dto import LoginRequestDto, TokenData, ForgotPasswordDto, ResetPasswordDto
 from app.dtos.user_dto import RegisterUserDto, RegisterUser, UpdateUserProfile, UserResponseDto, VerifyEmailDto
 from app.middlewares.authenticate import get_current_user
 from app.services import UserService
@@ -155,6 +155,23 @@ async def manual_verify_email(user: UserResponseDto = Depends(get_current_user),
 async def verify_email(user: UserResponseDto = Depends(get_current_user), user_service: UserService = Depends(get_user_service)) -> JSONResponse:
 
     response = await user_service.update_user_email_verification_status(user.email)
+
+    api_resp = api_response(code=response.code, data=response.data, message=response.message)
+    return api_resp
+
+@router.post("/forgot-password", response_model=ApiResponse[UserResponseDto])
+async def forgot_password(request: ForgotPasswordDto, user_service: UserService = Depends(get_user_service)) -> JSONResponse:
+
+    response = await user_service.forgot_password(str(request.email))
+
+    api_resp = api_response(code=response.code, data=response.data, message=response.message)
+    return api_resp
+
+
+@router.post("/reset-password", response_model=ApiResponse[UserResponseDto])
+async def reset_password(user: ResetPasswordDto, user_service: UserService = Depends(get_user_service)) -> JSONResponse:
+
+    response = await user_service.reset_password(user)
 
     api_resp = api_response(code=response.code, data=response.data, message=response.message)
     return api_resp

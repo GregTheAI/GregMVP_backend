@@ -29,5 +29,6 @@ class User(AuditTrail, SQLModel, table=True):
     resetPasswordExpirationTime: datetime | None = Field(default=None)
     last_login: datetime = Field(default_factory=datetime.utcnow)
 
+    # customers: ClassVar = relationship("Customer", back_populates="user")
     user_subscriptions: ClassVar = relationship("UserSubscription", back_populates="user")
 
