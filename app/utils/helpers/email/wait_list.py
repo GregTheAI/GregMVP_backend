@@ -542,7 +542,7 @@ def send_email_confirmation_html(first_name: str, verification_url: str) -> str:
           <div>
             <center style="padding-top: 78px">
               <img
-                src="https://res.cloudinary.com/daviluiz/image/upload/v1636639053/Logo.png"
+                src=""
                 alt="logo"
               />
             </center>
@@ -647,7 +647,7 @@ def forgot_password_html(first_name: str, verification_url: str, otp: str) -> st
           <div>
             <center style="padding-top: 78px">
               <img
-                src="https://res.cloudinary.com/daviluiz/image/upload/v1636639053/Logo.png"
+                src=""
                 alt="logo"
               />
             </center>
